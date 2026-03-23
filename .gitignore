@@ -29,10 +29,8 @@ logs/*
 !logs/.gitkeep
 
 # ML Artifacts
-
 artifacts/*
 !artifacts/.gitkeep
-*.pkl
 
 # Uploads
 
@@ -58,3 +56,28 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Conda
+.conda/
+*.pyw
+*.pyd
+
+# Test cache
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Distribution
+*.egg
+MANIFEST
+```
+
+---
+
+**One important fix:**
+
+Your ML artifacts line:
+```
+artifacts/*
+!artifacts/.gitkeep
+*.pkl
