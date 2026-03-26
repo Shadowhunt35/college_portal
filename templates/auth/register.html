@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Register — College Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-6">
+
+    <div class="text-center mb-4">
+      <i class="bi bi-person-plus-fill text-primary" style="font-size: 3rem;"></i>
+      <h2 class="fw-bold mt-2">Create Account</h2>
+      <p class="text-muted">Students only — use your college registration number</p>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('auth.register') }}">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Registration Number</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              <input type="text" name="reg_no" class="form-control"
+                     placeholder="e.g. 22151113003 or 23151113003LE"
+                     value="{{ reg_no or '' }}"
+                     required autofocus>
+            </div>
+            <div class="form-text">
+              Lateral entry students add <strong>LE</strong> at the end. e.g. 23151113003LE
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Full Name</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" name="name" class="form-control"
+                     placeholder="Enter your full name"
+                     value="{{ name or '' }}" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" id="password"
+                     class="form-control"
+                     placeholder="Minimum 6 characters" required>
+              <button class="btn btn-outline-secondary" type="button"
+                      onclick="togglePassword('password', 'eye1')">
+                <i class="bi bi-eye" id="eye1"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Confirm Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" name="confirm_password" id="confirm_password"
+                     class="form-control"
+                     placeholder="Re-enter your password" required>
+              <button class="btn btn-outline-secondary" type="button"
+                      onclick="togglePassword('confirm_password', 'eye2')">
+                <i class="bi bi-eye" id="eye2"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Info box -->
+          <div class="alert alert-info py-2 small mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            Your department, batch and semester will be automatically detected
+            from your registration number.
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-person-check me-2"></i>Create Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <span class="text-muted">Already have an account?</span>
+      <a href="{{ url_for('auth.login') }}" class="ms-1 fw-semibold">Login</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePassword(fieldId, iconId) {
+  const field = document.getElementById(fieldId);
+  const icon  = document.getElementById(iconId);
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    field.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+}
+</script>
+{% endblock %}

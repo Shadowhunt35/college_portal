@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Attendance — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-calendar-check me-2"></i>My Attendance</h3>
+  <p class="text-muted mb-0">Semester {{ current_user.current_semester }} — {{ current_user.department.name }}</p>
+</div>
+
+{% for item in data %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div>
+      <span class="fw-bold">{{ item.subject.name }}</span>
+      <span class="text-muted ms-2 small">{{ item.subject.code }}</span>
+      <span class="badge bg-secondary ms-2">{{ item.subject.credits }} credits</span>
+      {% if item.subject.has_lab %}
+        <span class="badge bg-info ms-1">Has Lab</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+
+      <!-- Theory Attendance -->
+      <div class="col-md-{% if item.subject.has_lab %}6{% else %}12{% endif %}">
+        <h6 class="fw-semibold text-secondary mb-3">
+          <i class="bi bi-book me-1"></i>Theory Classes
+        </h6>
+        {% if item.theory_records %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="progress flex-grow-1" style="height:12px; border-radius:6px;">
+              <div class="progress-bar
+                {% if item.theory_pct >= 75 %}bg-success
+                {% elif item.theory_pct >= 60 %}bg-warning
+                {% else %}bg-danger{% endif %}"
+                style="width: {{ item.theory_pct or 0 }}%"></div>
+            </div>
+            <span class="fw-bold
+              {% if item.theory_pct >= 75 %}text-success
+              {% elif item.theory_pct >= 60 %}text-warning
+              {% else %}text-danger{% endif %}">
+              {{ item.theory_pct }}%
+            </span>
+          </div>
+          <p class="text-muted small mb-3">
+            Present: {{ item.theory_records | selectattr('present') | list | length }} /
+            {{ item.theory_records | length }} classes
+            {% if item.theory_pct < 75 %}
+              <span class="text-danger ms-2">
+                <i class="bi bi-exclamation-triangle"></i> Below 75%
+              </span>
+            {% endif %}
+          </p>
+          <!-- Daily records -->
+          <div class="d-flex flex-wrap gap-1">
+            {% for r in item.theory_records %}
+              <span class="badge {% if r.present %}bg-success{% else %}bg-danger{% endif %}"
+                    title="{{ r.date }}">
+                {{ r.date.strftime('%d/%m') }}
+              </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No theory records yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Lab Attendance -->
+      {% if item.subject.has_lab %}
+      <div class="col-md-6">
+        <h6 class="fw-semibold text-secondary mb-3">
+          <i class="bi bi-pc-display me-1"></i>Lab Classes
+        </h6>
+        {% if item.lab_records %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="progress flex-grow-1" style="height:12px; border-radius:6px;">
+              <div class="progress-bar
+                {% if item.lab_pct >= 75 %}bg-success
+                {% elif item.lab_pct >= 60 %}bg-warning
+                {% else %}bg-danger{% endif %}"
+                style="width: {{ item.lab_pct }}%"></div>
+            </div>
+            <span class="fw-bold
+              {% if item.lab_pct >= 75 %}text-success
+              {% elif item.lab_pct >= 60 %}text-warning
+              {% else %}text-danger{% endif %}">
+              {{ item.lab_pct }}%
+            </span>
+          </div>
+          <p class="text-muted small mb-3">
+            Present: {{ item.lab_records | selectattr('present') | list | length }} /
+            {{ item.lab_records | length }} classes
+          </p>
+          <div class="d-flex flex-wrap gap-1">
+            {% for r in item.lab_records %}
+              <span class="badge {% if r.present %}bg-success{% else %}bg-danger{% endif %}"
+                    title="{{ r.date }}">
+                {{ r.date.strftime('%d/%m') }}
+              </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No lab records yet.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-calendar-x" style="font-size:3rem;"></i>
+  <p class="mt-3">No attendance records found for this semester.</p>
+</div>
+{% endfor %}
+{% endblock %}

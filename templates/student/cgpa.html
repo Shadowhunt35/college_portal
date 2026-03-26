@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}CGPA — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-graph-up me-2"></i>My CGPA</h3>
+  <p class="text-muted mb-0">Academic performance across all semesters</p>
+</div>
+
+{% if records %}
+<!-- Latest CGPA Card -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card
+      {% if records[-1].value >= 8 %}bg-success
+      {% elif records[-1].value >= 6 %}bg-primary
+      {% elif records[-1].value >= 5 %}bg-warning
+      {% else %}bg-danger{% endif %}">
+      <div class="stat-number">{{ records[-1].value }}</div>
+      <div class="stat-label">Latest CGPA (Sem {{ records[-1].semester }})</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card bg-secondary">
+      <div class="stat-number">{{ records | length }}</div>
+      <div class="stat-label">Semesters Completed</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card bg-info">
+      <div class="stat-number">
+        {{ (records | sum(attribute='value') / records | length) | round(2) }}
+      </div>
+      <div class="stat-label">Average CGPA</div>
+    </div>
+  </div>
+</div>
+
+<!-- CGPA Table -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white">
+    <i class="bi bi-table me-2 text-primary"></i>Semester-wise CGPA
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Semester</th>
+            <th>Academic Year</th>
+            <th>CGPA</th>
+            <th>Grade</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td><strong>Semester {{ r.semester }}</strong></td>
+            <td>{{ r.academic_year }}</td>
+            <td>
+              <span class="fw-bold fs-5
+                {% if r.value >= 8 %}text-success
+                {% elif r.value >= 6 %}text-primary
+                {% elif r.value >= 5 %}text-warning
+                {% else %}text-danger{% endif %}">
+                {{ r.value }}/10
+              </span>
+            </td>
+            <td>
+              {% if r.value >= 9 %}
+                <span class="badge bg-success">Outstanding</span>
+              {% elif r.value >= 8 %}
+                <span class="badge bg-success">Excellent</span>
+              {% elif r.value >= 7 %}
+                <span class="badge bg-primary">Good</span>
+              {% elif r.value >= 6 %}
+                <span class="badge bg-info">Average</span>
+              {% elif r.value >= 5 %}
+                <span class="badge bg-warning text-dark">Pass</span>
+              {% else %}
+                <span class="badge bg-danger">Low</span>
+              {% endif %}
+            </td>
+            <td style="width: 200px;">
+              <div class="progress" style="height: 10px; border-radius: 5px;">
+                <div class="progress-bar
+                  {% if r.value >= 8 %}bg-success
+                  {% elif r.value >= 6 %}bg-primary
+                  {% elif r.value >= 5 %}bg-warning
+                  {% else %}bg-danger{% endif %}"
+                  style="width: {{ (r.value / 10) * 100 }}%">
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-graph-up" style="font-size:3rem;"></i>
+  <p class="mt-3">No CGPA records found yet.</p>
+  <p class="small">CGPA is updated by your professor after semester results.</p>
+</div>
+{% endif %}
+{% endblock %}

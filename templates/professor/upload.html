@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Upload File{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-upload me-2"></i>Upload Marks / Attendance</h3>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-file-earmark-arrow-up me-2 text-primary"></i>Upload File
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Subject</label>
+            <select name="subject_id" class="form-select" required
+                    onchange="updateBatch(this)">
+              <option value="">— Choose Subject —</option>
+              {% for a in assignments %}
+              <option value="{{ a.subject_id }}"
+                      data-batch="{{ a.batch_id }}"
+                      {% if a.subject.has_lab %}data-lab="true"{% endif %}>
+                {{ a.subject.name }} ({{ a.subject.code }}) — {{ a.batch.name }} Batch
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <input type="hidden" name="batch_id" id="batch_id_field">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Upload Type</label>
+            <select name="upload_type" class="form-select" id="upload_type"
+                    onchange="toggleAttType()">
+              <option value="marks">Marks</option>
+              <option value="attendance">Attendance</option>
+            </select>
+          </div>
+
+          <div class="mb-3" id="att_type_div" style="display:none;">
+            <label class="form-label fw-semibold">Attendance Type</label>
+            <select name="att_type" class="form-select">
+              <option value="theory">Theory</option>
+              <option value="lab">Lab</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Academic Year</label>
+            <input type="text" name="academic_year" class="form-control"
+                   value="{{ current_year }}" placeholder="e.g. 2024-25">
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Select File</label>
+            <input type="file" name="file" class="form-control"
+                   accept=".csv,.xlsx,.xls" required>
+            <div class="form-text">Accepted: CSV, XLSX, XLS (max 10MB)</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-cloud-upload me-2"></i>Upload & Process
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Format Guide -->
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-info-circle me-2 text-info"></i>Marks File Format
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Required column: <code>reg_no</code></p>
+        <p class="small text-muted mb-2">Optional columns:</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered small">
+            <thead class="table-light">
+              <tr>
+                <th>reg_no</th>
+                <th>theory_internal</th>
+                <th>assignment</th>
+                <th>attendance_marks</th>
+                <th>lab_internal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>22151113001</td><td>18</td><td>4.5</td><td>5</td><td>17</td>
+              </tr>
+              <tr>
+                <td>22151113002</td><td>14</td><td>3</td><td>4</td><td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-info-circle me-2 text-info"></i>Attendance File Format
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">
+          First column: <code>reg_no</code> — remaining columns are dates
+        </p>
+        <p class="small text-muted mb-1">
+          Present: <code>1</code> or <code>P</code> &nbsp;|&nbsp;
+          Absent: <code>0</code> or <code>A</code>
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered small">
+            <thead class="table-light">
+              <tr>
+                <th>reg_no</th><th>01-Jan</th><th>03-Jan</th><th>05-Jan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>22151113001</td><td>1</td><td>1</td><td>0</td></tr>
+              <tr><td>22151113002</td><td>P</td><td>A</td><td>P</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Result -->
+{% if result %}
+<div class="card shadow-sm mt-4">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-clipboard-check me-2 text-success"></i>Upload Result
+  </div>
+  <div class="card-body">
+    <div class="alert alert-success">
+      <i class="bi bi-check-circle me-2"></i>
+      <strong>{{ result.saved | length }}</strong> records saved successfully.
+    </div>
+
+    {% if result.warnings %}
+    <div class="alert alert-warning">
+      <strong>Warnings:</strong>
+      <ul class="mb-0 mt-1 small">
+        {% for w in result.warnings %}
+        <li>{{ w }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if result.skipped %}
+    <div class="alert alert-danger">
+      <strong>Skipped {{ result.skipped | length }} rows:</strong>
+      <ul class="mb-0 mt-1 small">
+        {% for s in result.skipped %}
+        <li>
+          {% if s.reg_no %}Row ({{ s.reg_no }}){% else %}Row {{ s.row }}{% endif %}
+          — {{ s.reason }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateBatch(select) {
+  const opt = select.options[select.selectedIndex];
+  document.getElementById('batch_id_field').value = opt.dataset.batch || '';
+}
+function toggleAttType() {
+  const t   = document.getElementById('upload_type').value;
+  const div = document.getElementById('att_type_div');
+  div.style.display = t === 'attendance' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

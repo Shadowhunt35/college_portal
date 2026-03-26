@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Risk Report{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h3><i class="bi bi-shield-exclamation me-2"></i>Student Risk Report</h3>
+    <p class="text-muted mb-0">{{ report | length }} students — sorted by risk (highest first)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <span class="badge bg-danger fs-6">High: {{ report | selectattr('risk.label', 'equalto', 'High Risk') | list | length }}</span>
+    <span class="badge bg-warning text-dark fs-6">Medium: {{ report | selectattr('risk.label', 'equalto', 'Medium Risk') | list | length }}</span>
+    <span class="badge bg-success fs-6">Low: {{ report | selectattr('risk.label', 'equalto', 'Low Risk') | list | length }}</span>
+  </div>
+</div>
+
+{% if report %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th class="text-center">Attendance</th>
+            <th class="text-center">Avg Theory</th>
+            <th class="text-center">CGPA</th>
+            <th class="text-center">Score</th>
+            <th class="text-center">Risk Level</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in report %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td>
+              <div class="fw-semibold">{{ r.student.name }}</div>
+              <small class="text-muted">{{ r.student.reg_no }}</small>
+            </td>
+            <td class="text-center">
+              <span class="{% if r.att_pct >= 75 %}text-success{% elif r.att_pct >= 60 %}text-warning{% else %}text-danger{% endif %} fw-semibold">
+                {{ r.att_pct }}%
+              </span>
+            </td>
+            <td class="text-center">{{ r.avg_theory }}/20</td>
+            <td class="text-center">{{ r.cgpa }}</td>
+            <td class="text-center">
+              <div class="progress" style="height:8px;border-radius:4px;width:80px;margin:auto;">
+                <div class="progress-bar bg-{{ r.risk.color }}"
+                     style="width:{{ r.risk.score }}%"></div>
+              </div>
+              <small>{{ r.risk.score }}</small>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-{{ r.risk.color }} fs-6">
+                {{ r.risk.label }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-people" style="font-size:3rem;"></i>
+  <p class="mt-3">No student data available yet.</p>
+</div>
+{% endif %}
+{% endblock %}

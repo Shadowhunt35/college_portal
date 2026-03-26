@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h3><i class="bi bi-speedometer2 me-2"></i>My Dashboard</h3>
+    <p class="text-muted mb-0">
+      {{ current_user.department.name }} |
+      Semester {{ current_user.current_semester }} |
+      Batch {{ current_user.batch.name }}
+      {% if current_user.is_lateral_entry %}
+        <span class="badge bg-info ms-1">Lateral Entry</span>
+      {% endif %}
+    </p>
+  </div>
+  <div class="text-muted small">{{ current_user.reg_no }}</div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+
+  <!-- Attendance -->
+  <div class="col-md-3">
+    <div class="stat-card {% if overall_att_pct >= 75 %}bg-success{% elif overall_att_pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+      <div class="stat-number">{{ overall_att_pct }}%</div>
+      <div class="stat-label"><i class="bi bi-calendar-check me-1"></i>Overall Attendance</div>
+    </div>
+  </div>
+
+  <!-- CGPA -->
+  <div class="col-md-3">
+    <div class="stat-card bg-primary">
+      <div class="stat-number">{{ latest_cgpa or 'N/A' }}</div>
+      <div class="stat-label"><i class="bi bi-graph-up me-1"></i>Latest CGPA</div>
+    </div>
+  </div>
+
+  <!-- Avg Internal -->
+  <div class="col-md-3">
+    <div class="stat-card bg-info">
+      <div class="stat-number">{{ avg_theory }}/20</div>
+      <div class="stat-label"><i class="bi bi-journal-text me-1"></i>Avg Theory Internal</div>
+    </div>
+  </div>
+
+  <!-- Risk -->
+  <div class="col-md-3">
+    <div class="stat-card bg-{{ risk.color }}">
+      <div class="stat-number" style="font-size:1.4rem;">{{ risk.label }}</div>
+      <div class="stat-label"><i class="bi bi-shield me-1"></i>Risk Level ({{ risk.score }})</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="row g-4">
+
+  <!-- Attendance per Subject -->
+  <div class="col-md-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <span><i class="bi bi-calendar3 me-2 text-primary"></i>Subject Attendance</span>
+        <a href="{{ url_for('student.attendance') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Theory</th>
+                <th>Lab</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in attendance_summary %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ item.subject.name }}</div>
+                  <small class="text-muted">{{ item.subject.code }}</small>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1 attendance-bar">
+                      <div class="progress-bar
+                        {% if item.theory_pct >= 75 %}bg-success
+                        {% elif item.theory_pct >= 60 %}bg-warning
+                        {% else %}bg-danger{% endif %}"
+                        style="width: {{ item.theory_pct }}%"></div>
+                    </div>
+                    <small>{{ item.theory_pct }}%</small>
+                  </div>
+                  <small class="text-muted">{{ item.theory_present }}/{{ item.theory_total }}</small>
+                </td>
+                <td>
+                  {% if item.subject.has_lab %}
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1 attendance-bar">
+                        <div class="progress-bar
+                          {% if item.lab_pct >= 75 %}bg-success
+                          {% elif item.lab_pct >= 60 %}bg-warning
+                          {% else %}bg-danger{% endif %}"
+                          style="width: {{ item.lab_pct }}%"></div>
+                      </div>
+                      <small>{{ item.lab_pct }}%</small>
+                    </div>
+                    <small class="text-muted">{{ item.lab_present }}/{{ item.lab_total }}</small>
+                  {% else %}
+                    <span class="text-muted small">No Lab</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.low_attendance %}
+                    <span class="badge bg-danger">Low</span>
+                  {% else %}
+                    <span class="badge bg-success">Good</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  No attendance records found for this semester.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-md-5">
+
+    <!-- Marks Summary -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <span><i class="bi bi-journal-text me-2 text-primary"></i>Internal Marks</span>
+        <a href="{{ url_for('student.marks') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 small">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Theory</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in marks_summary %}
+              <tr>
+                <td>{{ item.subject.name }}</td>
+                <td>
+                  {% if item.mark %}
+                    {{ item.mark.theory_internal or '—' }}/20
+                  {% else %}
+                    <span class="text-muted">Not entered</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.mark %}
+                    <strong>{{ item.mark.total }}/30</strong>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-3">No marks yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notices -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <span><i class="bi bi-bell me-2 text-primary"></i>Notices</span>
+        <a href="{{ url_for('student.notices') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for notice in notices %}
+        <div class="list-group-item">
+          <div class="fw-semibold small">{{ notice.title }}</div>
+          <div class="text-muted" style="font-size:0.8rem;">
+            {{ notice.created_at.strftime('%d %b %Y') }}
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted text-center py-3 small">
+          No notices yet.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Chatbot -->
+<div id="chatbot-container">
+  <div id="chatbot-window">
+    <div id="chatbot-header">
+      <span><i class="bi bi-robot me-2"></i>AI Assistant</span>
+      <button onclick="toggleChat()" style="background:none;border:none;color:white;font-size:1.2rem;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div id="chatbot-messages">
+      <div class="chat-msg bot">
+        Hi {{ current_user.name.split()[0] }}! 👋 I can help you with your attendance,
+        marks, CGPA and academic performance. What would you like to know?
+      </div>
+    </div>
+    <div id="chatbot-input-area">
+      <input type="text" id="chatbot-input"
+             placeholder="Ask about your attendance, marks..."
+             onkeypress="if(event.key==='Enter') sendMessage()">
+      <button class="btn btn-primary btn-sm px-3" onclick="sendMessage()">
+        <i class="bi bi-send"></i>
+      </button>
+    </div>
+  </div>
+  <button id="chatbot-toggle" onclick="toggleChat()">
+    <i class="bi bi-robot"></i>
+  </button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}
