@@ -9,7 +9,7 @@ Built as a Major Project for CSE(AI) with ML-powered risk prediction and AI chat
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/your-username/COLLEGE_PORTAL
+git clone https://github.com/Shadowhunt35/COLLEGE_PORTAL
 cd COLLEGE_PORTAL
 
 # 2. Create virtual environment
