@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Professor Assignments — Admin{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-person-badge me-2"></i>Professor–Subject Assignments</h3>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-plus-circle me-2 text-primary"></i>Assign Subject
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Professor / HOD</label>
+            <select name="professor_id" class="form-select" required>
+              <option value="">— Select —</option>
+              {% for p in professors %}
+              <option value="{{ p.id }}">{{ p.name }} ({{ p.role }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Subject</label>
+            <select name="subject_id" class="form-select" required>
+              <option value="">— Select —</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}">{{ s.name }} ({{ s.code }}) — Sem {{ s.semester }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Batch</label>
+            <select name="batch_id" class="form-select" required>
+              <option value="">— Select —</option>
+              {% for b in batches %}
+              <option value="{{ b.id }}">{{ b.department.name }} — {{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Academic Year</label>
+            <input type="text" name="academic_year" class="form-control"
+                   value="{{ current_year }}" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-link me-2"></i>Assign
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-list-ul me-2 text-primary"></i>Current Assignments
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr><th>Professor</th><th>Subject</th><th>Batch</th><th>Year</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for a in assignments %}
+              <tr>
+                <td class="small fw-semibold">{{ a.professor.name }}</td>
+                <td><small>{{ a.subject.name }}<br><span class="text-muted">{{ a.subject.code }}</span></small></td>
+                <td><small>{{ a.batch.name }}</small></td>
+                <td><small>{{ a.academic_year }}</small></td>
+                <td>
+                  <form method="POST"
+                        action="{{ url_for('admin.delete_assignment', assignment_id=a.id) }}"
+                        onsubmit="return confirm('Remove this assignment?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-muted text-center py-4">No assignments yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -25,23 +25,26 @@ def create_app(config_name: str = None):
     db.init_app(app)
     login_manager.init_app(app)
 
-    # ── Blueprints (uncomment as each route file is created) ──────────────────
+    # ── Blueprints ────────────────────────────────────────────────────────────
     from routes.auth      import auth_bp
     from routes.student   import student_bp
     from routes.professor import professor_bp
-    # from routes.hod       import hod_bp
-    # from routes.admin     import admin_bp
+    from routes.hod       import hod_bp
+    from routes.admin     import admin_bp
+    from api.v1.routes    import api_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(professor_bp)
-    # app.register_blueprint(hod_bp)
-    # app.register_blueprint(admin_bp)
+    app.register_blueprint(hod_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(api_bp)
 
     # ── Root ──────────────────────────────────────────────────────────────────
     @app.route('/')
     def index():
         return redirect(url_for('auth.login'))
+
     # ── Error Handlers ────────────────────────────────────────────────────────
     @app.errorhandler(403)
     def forbidden(e):

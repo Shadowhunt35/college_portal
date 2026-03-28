@@ -1,73 +1,98 @@
 {% extends 'base.html' %}
-{% block title %}Risk Report{% endblock %}
-
+{% block title %}Analytics — HOD{% endblock %}
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-  <div>
-    <h3><i class="bi bi-shield-exclamation me-2"></i>Student Risk Report</h3>
-    <p class="text-muted mb-0">{{ report | length }} students — sorted by risk (highest first)</p>
-  </div>
-  <div class="d-flex gap-2">
-    <span class="badge bg-danger fs-6">High: {{ report | selectattr('risk.label', 'equalto', 'High Risk') | list | length }}</span>
-    <span class="badge bg-warning text-dark fs-6">Medium: {{ report | selectattr('risk.label', 'equalto', 'Medium Risk') | list | length }}</span>
-    <span class="badge bg-success fs-6">Low: {{ report | selectattr('risk.label', 'equalto', 'Low Risk') | list | length }}</span>
-  </div>
+<div class="page-header">
+  <h3><i class="bi bi-bar-chart me-2"></i>Department Analytics</h3>
+  <p class="text-muted mb-0">{{ total }} total students across your department(s)</p>
 </div>
 
-{% if report %}
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Student</th>
-            <th class="text-center">Attendance</th>
-            <th class="text-center">Avg Theory</th>
-            <th class="text-center">CGPA</th>
-            <th class="text-center">Score</th>
-            <th class="text-center">Risk Level</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in report %}
-          <tr>
-            <td class="text-muted">{{ loop.index }}</td>
-            <td>
-              <div class="fw-semibold">{{ r.student.name }}</div>
-              <small class="text-muted">{{ r.student.reg_no }}</small>
-            </td>
-            <td class="text-center">
-              <span class="{% if r.att_pct >= 75 %}text-success{% elif r.att_pct >= 60 %}text-warning{% else %}text-danger{% endif %} fw-semibold">
-                {{ r.att_pct }}%
-              </span>
-            </td>
-            <td class="text-center">{{ r.avg_theory }}/20</td>
-            <td class="text-center">{{ r.cgpa }}</td>
-            <td class="text-center">
-              <div class="progress" style="height:8px;border-radius:4px;width:80px;margin:auto;">
-                <div class="progress-bar bg-{{ r.risk.color }}"
-                     style="width:{{ r.risk.score }}%"></div>
-              </div>
-              <small>{{ r.risk.score }}</small>
-            </td>
-            <td class="text-center">
-              <span class="badge bg-{{ r.risk.color }} fs-6">
-                {{ r.risk.label }}
-              </span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<!-- Risk Overview -->
+<div class="row g-3 mb-4">
+  {% for label, color in [('High Risk','danger'),('Medium Risk','warning'),('Low Risk','success')] %}
+  <div class="col-md-4">
+    <div class="stat-card bg-{{ color }}">
+      <div class="stat-number">{{ risk_counts[label] }}</div>
+      <div class="stat-label">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <!-- By Department -->
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-building me-2 text-primary"></i>By Department
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th class="text-center">Students</th>
+              <th class="text-center">Avg Att.</th>
+              <th class="text-center">High Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dept, info in by_dept.items() %}
+            <tr>
+              <td class="fw-semibold">{{ dept }}</td>
+              <td class="text-center">{{ info.total }}</td>
+              <td class="text-center">
+                <span class="{% if info.avg_att >= 75 %}text-success{% elif info.avg_att >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                  {{ info.avg_att }}%
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-danger">{{ info.high }}</span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted text-center py-3">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- By Semester -->
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-layers me-2 text-primary"></i>By Semester
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Semester</th>
+              <th class="text-center">Students</th>
+              <th class="text-center">High Risk</th>
+              <th class="text-center">Risk %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sem, info in by_semester.items() %}
+            <tr>
+              <td class="fw-semibold">Semester {{ sem }}</td>
+              <td class="text-center">{{ info.total }}</td>
+              <td class="text-center"><span class="badge bg-danger">{{ info.high }}</span></td>
+              <td class="text-center">
+                {% if info.total > 0 %}
+                  {{ (info.high / info.total * 100) | round(1) }}%
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted text-center py-3">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
-{% else %}
-<div class="text-center text-muted py-5">
-  <i class="bi bi-people" style="font-size:3rem;"></i>
-  <p class="mt-3">No student data available yet.</p>
-</div>
-{% endif %}
 {% endblock %}

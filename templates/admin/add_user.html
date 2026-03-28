@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Add Staff — Admin{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-person-plus me-2"></i>Add Staff Account</h3>
+  <p class="text-muted mb-0">Create professor, HOD or admin accounts.</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Full Name</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">ID / Username</label>
+            <input type="text" name="reg_no" class="form-control"
+                   placeholder="e.g. PROF001 or EMP2024001" required>
+            <div class="form-text">Staff IDs can be any format — not validated like student reg nos.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Password</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="Min 6 characters" required minlength="6">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Role</label>
+            <select name="role" class="form-select" required>
+              <option value="">— Select Role —</option>
+              <option value="professor">Professor</option>
+              <option value="hod">HOD</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Department</label>
+            <select name="dept_id" class="form-select">
+              <option value="">— Select Department —</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Designation <small class="text-muted">(optional)</small></label>
+            <input type="text" name="designation" class="form-control"
+                   placeholder="e.g. Assistant Professor">
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-person-check me-2"></i>Create Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="text-center mt-3">
+      <a href="{{ url_for('admin.users') }}" class="text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Users
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

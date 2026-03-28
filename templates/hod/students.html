@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Students — HOD{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-people me-2"></i>All Students</h3>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Department</label>
+        <select name="dept_id" class="form-select">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {% if d.id == dept_id %}selected{% endif %}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Batch</label>
+        <select name="batch_id" class="form-select">
+          <option value="">All Batches</option>
+          {% for b in batches %}
+          <option value="{{ b.id }}" {% if b.id == batch_id %}selected{% endif %}>{{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Semester</label>
+        <select name="semester" class="form-select">
+          <option value="">All</option>
+          {% for s in semesters %}
+          <option value="{{ s }}" {% if s == semester %}selected{% endif %}>Sem {{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-filter me-1"></i>Filter
+        </button>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('hod.students') }}" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-x me-1"></i>Clear
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between">
+    <span class="fw-bold"><i class="bi bi-table me-2 text-primary"></i>Student List</span>
+    <span class="text-muted small">{{ data | length }} students</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Department</th>
+            <th>Batch / Sem</th>
+            <th class="text-center">Attendance</th>
+            <th class="text-center">Avg Theory</th>
+            <th class="text-center">CGPA</th>
+            <th class="text-center">Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in data %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td>
+              <div class="fw-semibold">{{ r.student.name }}</div>
+              <small class="text-muted">{{ r.student.reg_no }}</small>
+              {% if r.student.is_lateral_entry %}
+                <span class="badge bg-info" style="font-size:.65rem;">LE</span>
+              {% endif %}
+            </td>
+            <td><small>{{ r.student.department.name if r.student.department else '—' }}</small></td>
+            <td>
+              <small>{{ r.student.batch.name if r.student.batch else '—' }}</small><br>
+              <small class="text-muted">Sem {{ r.student.current_semester }}</small>
+            </td>
+            <td class="text-center">
+              <span class="{% if r.att_pct >= 75 %}text-success{% elif r.att_pct >= 60 %}text-warning{% else %}text-danger{% endif %} fw-semibold">
+                {{ r.att_pct }}%
+              </span>
+            </td>
+            <td class="text-center">{{ r.avg_theory }}/20</td>
+            <td class="text-center">{{ r.cgpa }}</td>
+            <td class="text-center">
+              <span class="badge bg-{{ r.risk.color }}">{{ r.risk.label }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">No students found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

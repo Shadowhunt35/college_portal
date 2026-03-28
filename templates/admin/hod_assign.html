@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}HOD Assignment — Admin{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-building me-2"></i>HOD Department Assignment</h3>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-plus-circle me-2 text-primary"></i>Assign HOD to Department
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="action" value="assign">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">HOD</label>
+            <select name="hod_id" class="form-select" required>
+              <option value="">— Select HOD —</option>
+              {% for h in hods %}
+              <option value="{{ h.id }}">{{ h.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Department</label>
+            <select name="dept_id" class="form-select" required>
+              <option value="">— Select Department —</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success w-100">
+            <i class="bi bi-link me-2"></i>Assign
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-list-ul me-2 text-primary"></i>Current HOD Mappings
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr><th>HOD</th><th>Department</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for m in mappings %}
+            <tr>
+              <td class="fw-semibold">{{ m.hod.name }}</td>
+              <td>{{ m.department.name }}</td>
+              <td>
+                <form method="POST">
+                  <input type="hidden" name="action"  value="remove">
+                  <input type="hidden" name="hod_id"  value="{{ m.hod_id }}">
+                  <input type="hidden" name="dept_id" value="{{ m.department_id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger"
+                          onclick="return confirm('Remove this mapping?')">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-muted text-center py-4">No mappings yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

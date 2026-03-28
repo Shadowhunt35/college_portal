@@ -1,4 +1,5 @@
 from functools import wraps
+from unittest import result
 from flask import (Blueprint, render_template, redirect,
                    url_for, flash, request, session)
 from flask_login import (login_user, logout_user,
@@ -26,7 +27,6 @@ def load_user(user_id):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    # Already logged in → redirect to their dashboard
     if current_user.is_authenticated:
         return redirect(url_for(get_dashboard_route(current_user.role)))
 
@@ -39,8 +39,6 @@ def login():
         if result['success']:
             login_user(result['user'])
             flash(f'Welcome back, {result["user"].name}!', 'success')
-
-            # Respect ?next= redirect
             next_page = request.args.get('next')
             if next_page:
                 return redirect(next_page)

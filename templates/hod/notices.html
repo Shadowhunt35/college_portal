@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Notices — HOD{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-megaphone me-2"></i>Notices</h3>
+</div>
+
+<div class="row g-4">
+  <!-- Post Notice Form -->
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-plus-circle me-2 text-primary"></i>Post New Notice
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title</label>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Body</label>
+            <textarea name="body" class="form-control" rows="4" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Department</label>
+            <select name="dept_id" class="form-select">
+              <option value="">All Departments</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-send me-2"></i>Post Notice
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notices List -->
+  <div class="col-md-8">
+    {% for notice in notices %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <h6 class="fw-bold mb-1">{{ notice.title }}</h6>
+          <div class="d-flex align-items-center gap-2">
+            <small class="text-muted">{{ notice.created_at.strftime('%d %b %Y') }}</small>
+            {% if notice.posted_by == current_user.id %}
+            <form method="POST"
+                  action="{{ url_for('hod.delete_notice_route', notice_id=notice.id) }}"
+                  onsubmit="return confirm('Delete this notice?')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <span class="badge bg-secondary mb-2">
+          {% if notice.department %}{{ notice.department.name }}{% else %}All Departments{% endif %}
+        </span>
+        <p class="text-muted mb-0 small">{{ notice.body }}</p>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-bell-slash" style="font-size:3rem;"></i>
+      <p class="mt-3">No notices posted yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

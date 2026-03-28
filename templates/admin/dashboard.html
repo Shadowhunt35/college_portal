@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h3>
+  <p class="text-muted mb-0">System overview — {{ current_user.name }}</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="stat-card bg-primary">
+      <div class="stat-number">{{ total_students }}</div>
+      <div class="stat-label">Students</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card bg-info">
+      <div class="stat-number">{{ total_professors }}</div>
+      <div class="stat-label">Professors</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card bg-warning">
+      <div class="stat-number">{{ total_hods }}</div>
+      <div class="stat-label">HODs</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card bg-success">
+      <div class="stat-number">{{ total_subjects }}</div>
+      <div class="stat-label">Subjects</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card bg-secondary">
+      <div class="stat-number">{{ total_batches }}</div>
+      <div class="stat-label">Batches</div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="stat-card bg-dark">
+      <div class="stat-number">{{ total_depts }}</div>
+      <div class="stat-label">Departments</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row g-3 mb-4">
+  {% for label, icon, url, color in [
+    ('Manage Users',       'people',          url_for('admin.users'),       'primary'),
+    ('Add Staff Account',  'person-plus',     url_for('admin.add_user'),    'success'),
+    ('Manage Subjects',    'book',            url_for('admin.subjects'),    'info'),
+    ('Assign Professors',  'person-badge',    url_for('admin.assignments'), 'warning'),
+    ('Manage Batches',     'layers',          url_for('admin.batches'),     'secondary'),
+    ('HOD Assignment',     'building',        url_for('admin.hod_assign'),  'danger'),
+  ] %}
+  <div class="col-md-2">
+    <a href="{{ url }}" class="btn btn-outline-{{ color }} w-100 py-3">
+      <i class="bi bi-{{ icon }} d-block mb-1" style="font-size:1.5rem;"></i>
+      <small>{{ label }}</small>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Recent Users -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-clock-history me-2 text-primary"></i>Recently Registered
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Name</th><th>ID</th><th>Role</th><th>Department</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        {% for u in recent_users %}
+        <tr>
+          <td class="fw-semibold">{{ u.name }}</td>
+          <td><code>{{ u.reg_no }}</code></td>
+          <td><span class="badge bg-secondary">{{ u.role }}</span></td>
+          <td>{{ u.department.name if u.department else '—' }}</td>
+          <td class="text-muted small">{{ u.created_at.strftime('%d %b %Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

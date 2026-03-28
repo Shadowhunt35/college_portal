@@ -124,12 +124,19 @@ def change_password_service(user: User, old_password: str,
     return {'success': True, 'error': None}
 
 
-def get_dashboard_route(role: str) -> str:
-    """Return the correct dashboard route for a given role."""
-    routes = {
-        'student':   'student.dashboard',
-        'professor': 'professor.dashboard',
-        'hod':       'hod.dashboard',
-        'admin':     'admin.dashboard',
-    }
-    return routes.get(role, 'auth.login')
+def get_dashboard_route(role):
+    if not role:
+        return "auth.login"
+
+    role = str(role).strip().lower()
+
+    if role == "admin":
+        return "admin.dashboard"
+    elif role == "student":
+        return "student.dashboard"
+    elif role == "professor":
+        return "professor.dashboard"
+    elif role == "hod":
+        return "hod.dashboard"
+
+    return "auth.login"

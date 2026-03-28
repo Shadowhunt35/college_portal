@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}HOD Dashboard{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+  <div>
+    <h3><i class="bi bi-speedometer2 me-2"></i>HOD Dashboard</h3>
+    <p class="text-muted mb-0">
+      {% for d in departments %}{{ d.name }}{% if not loop.last %} &amp; {% endif %}{% endfor %}
+      — {{ current_user.name }}
+    </p>
+  </div>
+  <a href="{{ url_for('hod.analytics') }}" class="btn btn-primary">
+    <i class="bi bi-bar-chart me-1"></i>Analytics
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card bg-primary">
+      <div class="stat-number">{{ total_students }}</div>
+      <div class="stat-label"><i class="bi bi-people me-1"></i>Total Students</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card bg-info">
+      <div class="stat-number">{{ total_professors }}</div>
+      <div class="stat-label"><i class="bi bi-person-badge me-1"></i>Professors</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card bg-secondary">
+      <div class="stat-number">{{ total_subjects }}</div>
+      <div class="stat-label"><i class="bi bi-book me-1"></i>Subjects</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card bg-danger">
+      <div class="stat-number">{{ high_risk }}</div>
+      <div class="stat-label"><i class="bi bi-shield-exclamation me-1"></i>High Risk</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold">
+        <i class="bi bi-shield me-2 text-primary"></i>Risk Distribution
+      </div>
+      <div class="card-body">
+        {% set total = high_risk + medium_risk + low_risk %}
+        {% if total > 0 %}
+          {% for label, count, color in [('High Risk', high_risk, 'danger'), ('Medium Risk', medium_risk, 'warning'), ('Low Risk', low_risk, 'success')] %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-{{ color }} fw-semibold">{{ label }}</span>
+              <span>{{ count }} / {{ total }}</span>
+            </div>
+            <div class="progress" style="height:10px;">
+              <div class="progress-bar bg-{{ color }}"
+                   style="width:{{ (count/total*100)|round }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center py-3">No student data yet.</p>
+        {% endif %}
+        <a href="{{ url_for('hod.students') }}" class="btn btn-outline-primary w-100 mt-2">
+          <i class="bi bi-people me-1"></i>View All Students
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <span class="fw-bold"><i class="bi bi-megaphone me-2 text-primary"></i>Notices</span>
+        <a href="{{ url_for('hod.notices') }}" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus me-1"></i>Post Notice
+        </a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for notice in notices %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <span class="fw-semibold">{{ notice.title }}</span>
+            <small class="text-muted">{{ notice.created_at.strftime('%d %b %Y') }}</small>
+          </div>
+          <small class="text-muted">
+            {% if notice.department %}{{ notice.department.name }}{% else %}All Departments{% endif %}
+          </small>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted text-center py-3">No notices yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
