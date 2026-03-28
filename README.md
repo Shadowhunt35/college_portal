@@ -27,7 +27,7 @@ cp .env.example .env
 python app.py
 ```
 
-Open `http://localhost:5000` — login with `ADMIN001 / admin@123`
+Open `http://localhost:5000` — login with `ADMIN001`
 
 ---
 
