@@ -35,7 +35,7 @@ Open `http://localhost:5000` — login with `ADMIN001 / admin@123`
 
 | Role    | ID / Reg No | Password   |
 |---------|-------------|------------|
-| Admin   | ADMIN001    | admin@123  |
+| Admin   | ADMIN001    | *********  |
 
 *Staff accounts are created by admin. Students self-register.*
 
