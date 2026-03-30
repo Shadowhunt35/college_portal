@@ -1,57 +1,63 @@
 {% extends 'base.html' %}
-{% block title %}Login — College Portal{% endblock %}
+{% block title %}Login{% endblock %}
 
-{% block content %}
-<div class="row justify-content-center mt-5">
-  <div class="col-md-5">
+{% block auth_content %}
+<div class="auth-page">
+  <div class="auth-card">
 
-    <div class="text-center mb-4">
-      <i class="bi bi-mortarboard-fill text-primary" style="font-size: 3rem;"></i>
-      <h2 class="fw-bold mt-2">College Portal</h2>
-      <p class="text-muted">Sign in to your account</p>
+    <div class="auth-logo">
+      <img src="{{ url_for('static', filename='css/MCE_logo.jpg') }}" alt="MCE Logo">
+      <div class="college-name">Motihari College of Engineering</div>
+      <div class="college-sub">MCE Motihari · Bihar Engineering University</div>
     </div>
 
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <form method="POST" action="{{ url_for('auth.login') }}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Registration Number</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-person"></i></span>
-              <input type="text" name="reg_no" class="form-control"
-                     placeholder="e.g. 22151113003"
-                     value="{{ request.form.get('reg_no', '') }}"
-                     required autofocus>
-            </div>
-            <div class="form-text">Professors and Admin use their assigned ID.</div>
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label fw-semibold">Password</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              <input type="password" name="password" id="password"
-                     class="form-control" placeholder="Enter your password" required>
-              <button class="btn btn-outline-secondary" type="button"
-                      onclick="togglePassword()">
-                <i class="bi bi-eye" id="eye-icon"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="d-grid">
-            <button type="submit" class="btn btn-primary btn-lg">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Login
-            </button>
-          </div>
-        </form>
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <div class="mb-3">
+        <label class="form-label">Registration / Employee ID</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="reg_no" class="form-control"
+                 placeholder="e.g. 22151113003 or ADMIN001"
+                 value="{{ request.form.get('reg_no', '') }}"
+                 required autofocus>
+        </div>
       </div>
+
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" id="pwd" class="form-control"
+                 placeholder="Enter your password" required>
+          <button class="btn btn-outline-secondary" type="button"
+                  onclick="togglePwd()">
+            <i class="bi bi-eye" id="eye-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg w-100">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </button>
+    </form>
+
+    <div style="text-align:center; margin-top:20px; font-size:13px; color:var(--text-muted);">
+      New student?
+      <a href="{{ url_for('auth.register') }}" style="color:var(--gold); font-weight:600; text-decoration:none;">
+        Create Account
+      </a>
     </div>
 
-    <div class="text-center mt-3">
-      <span class="text-muted">New student?</span>
-      <a href="{{ url_for('auth.register') }}" class="ms-1 fw-semibold">Create Account</a>
+    <div style="text-align:center; margin-top:16px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--navy-border); padding-top:14px;">
+      Affiliated to Bihar Engineering University, Patna · Est. 1980
     </div>
 
   </div>
@@ -60,16 +66,11 @@
 
 {% block scripts %}
 <script>
-function togglePassword() {
-  const pwd  = document.getElementById('password');
-  const icon = document.getElementById('eye-icon');
-  if (pwd.type === 'password') {
-    pwd.type = 'text';
-    icon.className = 'bi bi-eye-slash';
-  } else {
-    pwd.type = 'password';
-    icon.className = 'bi bi-eye';
-  }
+function togglePwd() {
+  const p = document.getElementById('pwd');
+  const i = document.getElementById('eye-icon');
+  p.type = p.type === 'password' ? 'text' : 'password';
+  i.className = p.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
 }
 </script>
 {% endblock %}

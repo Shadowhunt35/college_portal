@@ -1,69 +1,79 @@
 {% extends 'base.html' %}
 {% block title %}HOD Dashboard{% endblock %}
+{% block page_title %}HOD Dashboard{% endblock %}
+
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-  <div>
-    <h3><i class="bi bi-speedometer2 me-2"></i>HOD Dashboard</h3>
-    <p class="text-muted mb-0">
-      {% for d in departments %}{{ d.name }}{% if not loop.last %} &amp; {% endif %}{% endfor %}
-      — {{ current_user.name }}
-    </p>
+
+<!-- Header -->
+<div style="background:linear-gradient(135deg,var(--brown) 0%,var(--navy-light) 100%);border:1px solid var(--navy-border);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <img src="{{ url_for('static', filename='css/MCE_logo.jpg') }}" style="width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);">
+    <div>
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold);">{{ current_user.name }}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;">
+        Head of Department ·
+        {% for d in departments %}{{ d.name }}{% if not loop.last %} &amp; {% endif %}{% endfor %}
+      </div>
+    </div>
   </div>
   <a href="{{ url_for('hod.analytics') }}" class="btn btn-primary">
     <i class="bi bi-bar-chart me-1"></i>Analytics
   </a>
 </div>
 
+<!-- Stats -->
 <div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="stat-card bg-primary">
+  <div class="col-6 col-md-3">
+    <div class="stat-card gold">
       <div class="stat-number">{{ total_students }}</div>
-      <div class="stat-label"><i class="bi bi-people me-1"></i>Total Students</div>
+      <div class="stat-label">Total Students</div>
+      <i class="bi bi-people stat-icon"></i>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="stat-card bg-info">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
       <div class="stat-number">{{ total_professors }}</div>
-      <div class="stat-label"><i class="bi bi-person-badge me-1"></i>Professors</div>
+      <div class="stat-label">Professors</div>
+      <i class="bi bi-person-badge stat-icon"></i>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="stat-card bg-secondary">
+  <div class="col-6 col-md-3">
+    <div class="stat-card brown">
       <div class="stat-number">{{ total_subjects }}</div>
-      <div class="stat-label"><i class="bi bi-book me-1"></i>Subjects</div>
+      <div class="stat-label">Subjects</div>
+      <i class="bi bi-book stat-icon"></i>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="stat-card bg-danger">
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
       <div class="stat-number">{{ high_risk }}</div>
-      <div class="stat-label"><i class="bi bi-shield-exclamation me-1"></i>High Risk</div>
+      <div class="stat-label">High Risk Students</div>
+      <i class="bi bi-shield-exclamation stat-icon"></i>
     </div>
   </div>
 </div>
 
 <div class="row g-4">
+  <!-- Risk Distribution -->
   <div class="col-md-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-bold">
-        <i class="bi bi-shield me-2 text-primary"></i>Risk Distribution
-      </div>
+    <div class="card h-100">
+      <div class="card-header"><span><i class="bi bi-shield"></i>Risk Distribution</span></div>
       <div class="card-body">
         {% set total = high_risk + medium_risk + low_risk %}
         {% if total > 0 %}
           {% for label, count, color in [('High Risk', high_risk, 'danger'), ('Medium Risk', medium_risk, 'warning'), ('Low Risk', low_risk, 'success')] %}
-          <div class="mb-3">
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-{{ color }} fw-semibold">{{ label }}</span>
-              <span>{{ count }} / {{ total }}</span>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+              <span style="color:var(--{{ color }});">{{ label }}</span>
+              <span style="color:var(--text-muted);">{{ count }} / {{ total }}</span>
             </div>
-            <div class="progress" style="height:10px;">
-              <div class="progress-bar bg-{{ color }}"
-                   style="width:{{ (count/total*100)|round }}%"></div>
+            <div class="progress" style="height:8px;">
+              <div class="progress-bar bg-{{ color }}" style="width:{{ (count/total*100)|round }}%"></div>
             </div>
           </div>
           {% endfor %}
         {% else %}
-          <p class="text-muted text-center py-3">No student data yet.</p>
+          <p style="text-align:center;color:var(--text-muted);padding:20px 0;">No student data yet.</p>
         {% endif %}
         <a href="{{ url_for('hod.students') }}" class="btn btn-outline-primary w-100 mt-2">
           <i class="bi bi-people me-1"></i>View All Students
@@ -72,30 +82,30 @@
     </div>
   </div>
 
+  <!-- Notices -->
   <div class="col-md-7">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white d-flex justify-content-between">
-        <span class="fw-bold"><i class="bi bi-megaphone me-2 text-primary"></i>Notices</span>
-        <a href="{{ url_for('hod.notices') }}" class="btn btn-sm btn-primary">
-          <i class="bi bi-plus me-1"></i>Post Notice
-        </a>
+    <div class="card h-100">
+      <div class="card-header">
+        <span><i class="bi bi-megaphone"></i>Notices</span>
+        <a href="{{ url_for('hod.notices') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus me-1"></i>Post Notice</a>
       </div>
-      <div class="list-group list-group-flush">
+      <div>
         {% for notice in notices %}
-        <div class="list-group-item">
-          <div class="d-flex justify-content-between">
-            <span class="fw-semibold">{{ notice.title }}</span>
-            <small class="text-muted">{{ notice.created_at.strftime('%d %b %Y') }}</small>
+        <div style="padding:12px 16px;border-bottom:1px solid var(--navy-border);">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+            <div style="font-weight:600;font-size:13px;">{{ notice.title }}</div>
+            <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;">{{ notice.created_at.strftime('%d %b %Y') }}</div>
           </div>
-          <small class="text-muted">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">
             {% if notice.department %}{{ notice.department.name }}{% else %}All Departments{% endif %}
-          </small>
+          </div>
         </div>
         {% else %}
-        <div class="list-group-item text-muted text-center py-3">No notices yet.</div>
+        <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No notices posted yet.</div>
         {% endfor %}
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}

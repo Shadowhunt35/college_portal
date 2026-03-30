@@ -64,6 +64,13 @@ def toggle_user_active(user_id: int) -> dict:
     user = User.query.get(user_id)
     if not user:
         return {'success': False, 'error': 'User not found.'}
+    
+    # Prevent deactivating last active admin
+    if user.role == 'admin' and user.is_active:
+        active_admin_count = User.query.filter_by(role='admin', is_active=True).count()
+        if active_admin_count <= 1:
+            return {'success': False, 'error': 'Cannot deactivate the last active admin.'}
+    
     user.is_active = not user.is_active
     db.session.commit()
     status = 'activated' if user.is_active else 'deactivated'
@@ -77,6 +84,13 @@ def delete_user(user_id: int, current_admin_id: int) -> dict:
         return {'success': False, 'error': 'User not found.'}
     if user.id == current_admin_id:
         return {'success': False, 'error': 'You cannot delete your own account.'}
+    
+    # Prevent deleting last active admin
+    if user.role == 'admin':
+        active_admin_count = User.query.filter_by(role='admin', is_active=True).count()
+        if active_admin_count <= 1:
+            return {'success': False, 'error': 'Cannot delete the last active admin.'}
+    
     name = user.name
     db.session.delete(user)
     db.session.commit()

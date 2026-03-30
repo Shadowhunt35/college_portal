@@ -1,14 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Professor Dashboard{% endblock %}
+{% block page_title %}Professor Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-  <div>
-    <h3><i class="bi bi-speedometer2 me-2"></i>Professor Dashboard</h3>
-    <p class="text-muted mb-0">
-      {{ current_user.department.name if current_user.department else '' }}
-      — {{ current_user.name }}
-    </p>
+
+<!-- Header -->
+<div style="background:linear-gradient(135deg,var(--brown) 0%,var(--navy-light) 100%);border:1px solid var(--navy-border);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <img src="{{ url_for('static', filename='css/MCE_logo.jpg') }}" style="width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);">
+    <div>
+      <div style="font-family:var(--font-display);font-size:18px;color:var(--gold);">{{ current_user.name }}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;">
+        {{ current_user.department.name if current_user.department else 'Professor' }} · Motihari College of Engineering
+      </div>
+    </div>
   </div>
   <a href="{{ url_for('professor.risk_report') }}" class="btn btn-danger">
     <i class="bi bi-shield-exclamation me-1"></i>Risk Report
@@ -19,60 +24,39 @@
 <div class="row g-4">
   {% for stat in subject_stats %}
   <div class="col-md-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span class="fw-bold">{{ stat.subject.name }}</span>
-            <span class="text-muted ms-2 small">{{ stat.subject.code }}</span>
-            <span class="badge bg-secondary ms-1">Sem {{ stat.subject.semester }}</span>
-            {% if stat.subject.has_lab %}
-              <span class="badge bg-info ms-1">Has Lab</span>
-            {% endif %}
-            {% if stat.subject.is_elective %}
-              <span class="badge bg-warning text-dark ms-1">Elective</span>
-            {% endif %}
-          </div>
-          <span class="badge bg-primary">{{ stat.batch.name }} Batch</span>
+    <div class="card h-100">
+      <div class="card-header">
+        <div>
+          <span style="font-weight:600;">{{ stat.subject.name }}</span>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">{{ stat.subject.code }}</span>
+          <span class="badge bg-secondary ms-1">Sem {{ stat.subject.semester }}</span>
+          {% if stat.subject.has_lab %}<span class="badge bg-info ms-1">Lab</span>{% endif %}
+          {% if stat.subject.is_elective %}<span class="badge bg-warning ms-1">Elective</span>{% endif %}
         </div>
+        <span class="badge bg-primary">{{ stat.batch.name }}</span>
       </div>
       <div class="card-body">
         <div class="row g-3 text-center mb-3">
           <div class="col-4">
-            <div class="fw-bold fs-4 text-primary">{{ stat.student_count }}</div>
-            <small class="text-muted">Students</small>
+            <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);">{{ stat.student_count }}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Students</div>
           </div>
           <div class="col-4">
-            <div class="fw-bold fs-4 {{ 'text-success' if stat.marks_entered > 0 else 'text-muted' }}">
-              {{ stat.marks_entered }}
-            </div>
-            <small class="text-muted">Marks Entered</small>
+            <div style="font-family:var(--font-display);font-size:1.6rem;color:{% if stat.marks_entered > 0 %}var(--success){% else %}var(--text-muted){% endif %};">{{ stat.marks_entered }}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Marks Entered</div>
           </div>
           <div class="col-4">
-            <div class="fw-bold fs-4 {{ 'text-success' if stat.marked_today else 'text-warning' }}">
-              {{ 'Done' if stat.marked_today else 'Pending' }}
+            <div style="font-family:var(--font-display);font-size:1rem;color:{% if stat.marked_today %}var(--success){% else %}var(--warning){% endif %};margin-top:4px;">
+              {{ '✓ Done' if stat.marked_today else '⏳ Pending' }}
             </div>
-            <small class="text-muted">Today's Att.</small>
+            <div style="font-size:11px;color:var(--text-muted);">Today's Att.</div>
           </div>
         </div>
-
-        <div class="d-flex gap-2 flex-wrap">
-          <a href="{{ url_for('professor.attendance', subject_id=stat.subject.id, batch_id=stat.batch.id) }}"
-             class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-calendar-check me-1"></i>Attendance
-          </a>
-          <a href="{{ url_for('professor.marks', subject_id=stat.subject.id, batch_id=stat.batch.id) }}"
-             class="btn btn-sm btn-outline-success">
-            <i class="bi bi-journal-text me-1"></i>Marks
-          </a>
-          <a href="{{ url_for('professor.cgpa', subject_id=stat.subject.id, batch_id=stat.batch.id) }}"
-             class="btn btn-sm btn-outline-info">
-            <i class="bi bi-graph-up me-1"></i>CGPA
-          </a>
-          <a href="{{ url_for('professor.upload') }}"
-             class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-upload me-1"></i>Upload
-          </a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a href="{{ url_for('professor.attendance', subject_id=stat.subject.id, batch_id=stat.batch.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-calendar-check me-1"></i>Attendance</a>
+          <a href="{{ url_for('professor.marks', subject_id=stat.subject.id, batch_id=stat.batch.id) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-journal-text me-1"></i>Marks</a>
+          <a href="{{ url_for('professor.cgpa', subject_id=stat.subject.id, batch_id=stat.batch.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-graph-up me-1"></i>CGPA</a>
+          <a href="{{ url_for('professor.upload') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-upload me-1"></i>Upload</a>
         </div>
       </div>
     </div>
@@ -81,10 +65,12 @@
 </div>
 
 {% else %}
-<div class="text-center text-muted py-5">
-  <i class="bi bi-journal-x" style="font-size:3rem;"></i>
-  <p class="mt-3">No subjects assigned yet.</p>
-  <p class="small">Contact admin to get subjects assigned to your account.</p>
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted);">
+    <i class="bi bi-journal-x" style="font-size:3rem;color:var(--navy-border);"></i>
+    <p style="margin-top:16px;">No subjects assigned yet.</p>
+    <p style="font-size:13px;">Contact admin to get subjects assigned.</p>
+  </div>
 </div>
 {% endif %}
 
@@ -92,30 +78,20 @@
 <div id="chatbot-container">
   <div id="chatbot-window">
     <div id="chatbot-header">
-      <span><i class="bi bi-robot me-2"></i>AI Assistant</span>
-      <button onclick="toggleChat()" style="background:none;border:none;color:white;font-size:1.2rem;">
-        <i class="bi bi-x-lg"></i>
-      </button>
+      <span><i class="bi bi-robot me-2"></i>MCE AI Assistant</span>
+      <button onclick="toggleChat()" style="background:none;border:none;color:white;font-size:1.1rem;cursor:pointer;"><i class="bi bi-x-lg"></i></button>
     </div>
     <div id="chatbot-messages">
-      <div class="chat-msg bot">
-        Hello Professor {{ current_user.name.split()[0] }}! 👋
-        I can help you analyse your students' performance and risk levels.
-      </div>
+      <div class="chat-msg bot">Hello Professor! 👋 Ask me about your students' attendance, marks, or risk levels.</div>
     </div>
     <div id="chatbot-input-area">
-      <input type="text" id="chatbot-input"
-             placeholder="Ask about your students..."
-             onkeypress="if(event.key==='Enter') sendProfMessage()">
-      <button class="btn btn-primary btn-sm px-3" onclick="sendProfMessage()">
-        <i class="bi bi-send"></i>
-      </button>
+      <input type="text" id="chatbot-input" placeholder="Ask about your students..." onkeypress="if(event.key==='Enter')sendProfMessage()">
+      <button class="btn btn-primary btn-sm px-3" onclick="sendProfMessage()"><i class="bi bi-send"></i></button>
     </div>
   </div>
-  <button id="chatbot-toggle" onclick="toggleChat()">
-    <i class="bi bi-robot"></i>
-  </button>
+  <button id="chatbot-toggle" onclick="toggleChat()"><i class="bi bi-robot"></i></button>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -123,19 +99,17 @@
 <script>
 function sendProfMessage() {
   const input = document.getElementById('chatbot-input');
-  const msg   = input.value.trim();
+  const msg = input.value.trim();
   if (!msg) return;
   appendMessage(msg, 'user');
   input.value = '';
   const typing = appendMessage('Thinking...', 'bot');
   fetch('/professor/chat', {
-    method:  'POST',
+    method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body:    JSON.stringify({message: msg})
-  })
-  .then(r => r.json())
-  .then(data => { typing.textContent = data.reply; })
-  .catch(() => { typing.textContent = 'Something went wrong. Try again.'; });
+    body: JSON.stringify({message: msg})
+  }).then(r => r.json()).then(data => { typing.textContent = data.reply; })
+    .catch(() => { typing.textContent = 'Something went wrong.'; });
 }
 </script>
 {% endblock %}

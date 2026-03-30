@@ -1,144 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}College Portal{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MCE Portal{% endblock %} — Motihari College of Engineering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block head %}{% endblock %}
 </head>
 <body>
 
 {% if current_user.is_authenticated %}
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="/">
-      <i class="bi bi-mortarboard-fill me-2"></i>College Portal
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
 
-      <!-- Student Nav -->
-      {% if current_user.role == 'student' %}
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('student.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('student.attendance') }}"><i class="bi bi-calendar-check me-1"></i>Attendance</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('student.marks') }}"><i class="bi bi-journal-text me-1"></i>Marks</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('student.cgpa') }}"><i class="bi bi-graph-up me-1"></i>CGPA</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('student.notices') }}"><i class="bi bi-bell me-1"></i>Notices</a>
-        </li>
-      </ul>
-      {% endif %}
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
 
-      <!-- Professor Nav -->
-      {% if current_user.role == 'professor' %}
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('professor.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('professor.attendance') }}"><i class="bi bi-calendar-check me-1"></i>Attendance</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('professor.marks') }}"><i class="bi bi-journal-text me-1"></i>Marks</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('professor.upload') }}"><i class="bi bi-upload me-1"></i>Upload</a>
-        </li>
-      </ul>
-      {% endif %}
-
-      <!-- HOD Nav -->
-      {% if current_user.role == 'hod' %}
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('hod.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('hod.students') }}"><i class="bi bi-people me-1"></i>Students</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('hod.analytics') }}"><i class="bi bi-bar-chart me-1"></i>Analytics</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('hod.notices') }}"><i class="bi bi-megaphone me-1"></i>Notices</a>
-        </li>
-      </ul>
-      {% endif %}
-
-      <!-- Admin Nav -->
-      {% if current_user.role == 'admin' %}
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.users') }}"><i class="bi bi-people me-1"></i>Users</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.departments') }}"><i class="bi bi-building me-1"></i>Departments</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.subjects') }}"><i class="bi bi-book me-1"></i>Subjects</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('admin.batches') }}"><i class="bi bi-layers me-1"></i>Batches</a>
-        </li>
-      </ul>
-      {% endif %}
-
-      <!-- Right side user menu -->
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle me-1"></i>{{ current_user.name }}
-            <span class="badge bg-light text-primary ms-1">{{ current_user.role | capitalize }}</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
-              <i class="bi bi-key me-2"></i>Change Password</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-          </ul>
-        </li>
-      </ul>
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <img src="{{ url_for('static', filename='css/MCE_logo.jpg') }}" alt="MCE Logo">
+    <div class="sidebar-brand-text">
+      <div class="college-name">Motihari College<br>of Engineering</div>
+      <div class="college-sub">Bihar Engineering University</div>
     </div>
   </div>
-</nav>
-{% endif %}
 
-<!-- Flash Messages -->
-<div class="container mt-3">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
+  <!-- User -->
+  <div class="sidebar-user">
+    <div class="sidebar-user-avatar">
+      {{ current_user.name[0].upper() }}
+    </div>
+    <div class="sidebar-user-info">
+      <div class="user-name">{{ current_user.name }}</div>
+      <div class="user-role">
+        {% if current_user.role == 'hod' %}HOD
+        {% else %}{{ current_user.role | capitalize }}{% endif %}
+        {% if current_user.department %} · {{ current_user.department.name }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+
+    {% if current_user.role == 'student' %}
+    <div class="nav-section-label">Student</div>
+    <a href="{{ url_for('student.dashboard') }}" {% if request.endpoint == 'student.dashboard' %}class="active"{% endif %}>
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('student.attendance') }}" {% if request.endpoint == 'student.attendance' %}class="active"{% endif %}>
+      <i class="bi bi-calendar-check"></i> Attendance
+    </a>
+    <a href="{{ url_for('student.marks') }}" {% if request.endpoint == 'student.marks' %}class="active"{% endif %}>
+      <i class="bi bi-journal-text"></i> Marks
+    </a>
+    <a href="{{ url_for('student.cgpa') }}" {% if request.endpoint == 'student.cgpa' %}class="active"{% endif %}>
+      <i class="bi bi-graph-up"></i> CGPA
+    </a>
+    <a href="{{ url_for('student.notices') }}" {% if request.endpoint == 'student.notices' %}class="active"{% endif %}>
+      <i class="bi bi-bell"></i> Notices
+    </a>
     {% endif %}
-  {% endwith %}
+
+    {% if current_user.role == 'professor' %}
+    <div class="nav-section-label">Professor</div>
+    <a href="{{ url_for('professor.dashboard') }}" {% if request.endpoint == 'professor.dashboard' %}class="active"{% endif %}>
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('professor.attendance') }}" {% if request.endpoint == 'professor.attendance' %}class="active"{% endif %}>
+      <i class="bi bi-calendar-check"></i> Attendance
+    </a>
+    <a href="{{ url_for('professor.marks') }}" {% if request.endpoint == 'professor.marks' %}class="active"{% endif %}>
+      <i class="bi bi-journal-text"></i> Enter Marks
+    </a>
+    <a href="{{ url_for('professor.cgpa') }}" {% if request.endpoint == 'professor.cgpa' %}class="active"{% endif %}>
+      <i class="bi bi-graph-up"></i> Enter CGPA
+    </a>
+    <a href="{{ url_for('professor.upload') }}" {% if request.endpoint == 'professor.upload' %}class="active"{% endif %}>
+      <i class="bi bi-upload"></i> Upload File
+    </a>
+    <a href="{{ url_for('professor.risk_report') }}" {% if request.endpoint == 'professor.risk_report' %}class="active"{% endif %}>
+      <i class="bi bi-shield-exclamation"></i> Risk Report
+    </a>
+    {% endif %}
+
+    {% if current_user.role == 'hod' %}
+    <div class="nav-section-label">HOD</div>
+    <a href="{{ url_for('hod.dashboard') }}" {% if request.endpoint == 'hod.dashboard' %}class="active"{% endif %}>
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('hod.students') }}" {% if request.endpoint == 'hod.students' %}class="active"{% endif %}>
+      <i class="bi bi-people"></i> All Students
+    </a>
+    <a href="{{ url_for('hod.analytics') }}" {% if request.endpoint == 'hod.analytics' %}class="active"{% endif %}>
+      <i class="bi bi-bar-chart"></i> Analytics
+    </a>
+    <a href="{{ url_for('hod.notices') }}" {% if request.endpoint == 'hod.notices' %}class="active"{% endif %}>
+      <i class="bi bi-megaphone"></i> Notices
+    </a>
+    {% endif %}
+
+    {% if current_user.role == 'admin' %}
+    <div class="nav-section-label">System</div>
+    <a href="{{ url_for('admin.dashboard') }}" {% if request.endpoint == 'admin.dashboard' %}class="active"{% endif %}>
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{{ url_for('admin.users') }}" {% if request.endpoint in ['admin.users','admin.add_user'] %}class="active"{% endif %}>
+      <i class="bi bi-people"></i> Users
+    </a>
+    <a href="{{ url_for('admin.subjects') }}" {% if request.endpoint == 'admin.subjects' %}class="active"{% endif %}>
+      <i class="bi bi-book"></i> Subjects
+    </a>
+    <a href="{{ url_for('admin.batches') }}" {% if request.endpoint == 'admin.batches' %}class="active"{% endif %}>
+      <i class="bi bi-layers"></i> Batches
+    </a>
+    <a href="{{ url_for('admin.assignments') }}" {% if request.endpoint == 'admin.assignments' %}class="active"{% endif %}>
+      <i class="bi bi-person-badge"></i> Assignments
+    </a>
+    <a href="{{ url_for('admin.hod_assign') }}" {% if request.endpoint == 'admin.hod_assign' %}class="active"{% endif %}>
+      <i class="bi bi-building"></i> HOD Assign
+    </a>
+    <a href="{{ url_for('admin.departments') }}" {% if request.endpoint == 'admin.departments' %}class="active"{% endif %}>
+      <i class="bi bi-diagram-3"></i> Departments
+    </a>
+    {% endif %}
+
+  </nav>
+
+  <!-- Footer -->
+  <div class="sidebar-footer">
+    <a href="{{ url_for('auth.change_password') }}">
+      <i class="bi bi-key"></i> Change Password
+    </a>
+    <a href="{{ url_for('auth.logout') }}" style="margin-top:4px;">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+    <div class="d-flex align-items-center gap-2">
+      {% if current_user.role == 'student' and current_user.batch %}
+        <span class="topbar-badge">{{ current_user.batch.name }} Batch</span>
+        <span class="topbar-badge">Sem {{ current_user.current_semester }}</span>
+      {% endif %}
+      <span class="topbar-badge">{{ current_user.reg_no }}</span>
+    </div>
+  </div>
+
+  <!-- Flash messages -->
+  <div style="padding: 0 28px; margin-top: 16px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Page content -->
+  <div class="page-body">
+    {% block content %}{% endblock %}
+  </div>
+
 </div>
 
-<!-- Main Content -->
-<main class="container mt-4 mb-5">
-  {% block content %}{% endblock %}
-</main>
+{% else %}
+<!-- Not authenticated — just show content (login/register pages) -->
+{% block auth_content %}{% endblock %}
+{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
