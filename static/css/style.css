@@ -203,14 +203,27 @@ code{background:rgba(255,255,255,.06);color:var(--gold);padding:2px 6px;border-r
 hr{border-color:var(--navy-border);opacity:1}
 
 /* AUTH PAGE */
-.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);position:relative;overflow:hidden}
-.auth-page::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(107,58,31,.12) 0%,transparent 70%);top:-200px;right:-200px}
-.auth-page::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,148,58,.08) 0%,transparent 70%);bottom:-100px;left:-100px}
-.auth-card{background:var(--navy-light);border:1px solid var(--navy-border);border-radius:16px;padding:40px;width:100%;max-width:440px;position:relative;z-index:1;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.auth-page{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f6f9fd 0%,#edf3f9 100%);position:relative;overflow:hidden;padding:28px}
+.auth-page::before{content:'';position:absolute;width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,rgba(31,111,178,.09) 0%,transparent 72%);top:-240px;right:-220px}
+.auth-page::after{content:'';position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(46,204,113,.08) 0%,transparent 70%);bottom:-220px;left:-160px}
+.auth-layout{position:relative;z-index:1;display:grid;grid-template-columns:minmax(360px,460px) minmax(320px,520px);background:#fff;border:1px solid var(--navy-border);border-radius:20px;box-shadow:0 24px 60px rgba(27,43,58,.14);overflow:hidden}
+.auth-card{background:var(--navy-light);padding:40px;width:100%;position:relative}
+.auth-card-compact{max-width:500px;border:1px solid var(--navy-border);border-radius:18px;box-shadow:0 16px 40px rgba(27,43,58,.12)}
 .auth-logo{text-align:center;margin-bottom:28px}
 .auth-logo img{width:72px;height:72px;border-radius:50%;border:3px solid var(--gold);margin-bottom:12px}
 .auth-logo .college-name{font-family:var(--font-display);font-size:20px;color:var(--gold);font-weight:700;line-height:1.2}
 .auth-logo .college-sub{font-size:12px;color:var(--text-muted);margin-top:4px}
+.auth-meta{text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted)}
+.auth-link{color:var(--gold);font-weight:600;text-decoration:none}
+.auth-link:hover{text-decoration:underline}
+.auth-footnote{text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--navy-border);padding-top:14px}
+.auth-side{background:linear-gradient(145deg,#165590 0%,#1f6fb2 55%,#2a86cb 100%);color:#eaf4ff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center}
+.auth-side-badge{display:inline-flex;align-items:center;width:max-content;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);margin-bottom:16px}
+.auth-side h2{font-family:var(--font-display);font-size:30px;line-height:1.2;margin-bottom:14px;color:#fff}
+.auth-side p{font-size:14px;line-height:1.7;margin-bottom:20px;color:rgba(234,244,255,.92)}
+.auth-side ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.auth-side li{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#eaf4ff}
+.auth-side li i{margin-top:2px}
 
 /* DROPDOWN */
 .dropdown-menu{background:var(--navy-light);border:1px solid var(--navy-border);border-radius:var(--radius-sm);box-shadow:var(--shadow)}
@@ -233,4 +246,8 @@ hr{border-color:var(--navy-border);opacity:1}
   .main-content{margin-left:0}
   .page-body{padding:16px}
   #chatbot-window{width:300px;height:400px}
+  .auth-page{padding:16px}
+  .auth-layout{grid-template-columns:1fr}
+  .auth-card{padding:30px 22px}
+  .auth-side{display:none}
 }
