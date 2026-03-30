@@ -9,7 +9,7 @@ Built as a Major Project for CSE(AI) with ML-powered risk prediction and AI chat
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/your-username/COLLEGE_PORTAL
+git clone https://github.com/Shadowhunt35/COLLEGE_PORTAL
 cd COLLEGE_PORTAL
 
 # 2. Create virtual environment
@@ -27,7 +27,7 @@ cp .env.example .env
 python app.py
 ```
 
-Open `http://localhost:5000` — login with `ADMIN001 / admin@123`
+Open `http://localhost:5000` — login with `ADMIN001`
 
 ---
 
@@ -35,7 +35,7 @@ Open `http://localhost:5000` — login with `ADMIN001 / admin@123`
 
 | Role    | ID / Reg No | Password   |
 |---------|-------------|------------|
-| Admin   | ADMIN001    | admin@123  |
+| Admin   | ADMIN001    | *********  |
 
 *Staff accounts are created by admin. Students self-register.*
 
