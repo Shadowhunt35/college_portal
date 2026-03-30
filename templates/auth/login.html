@@ -3,7 +3,8 @@
 
 {% block auth_content %}
 <div class="auth-page">
-  <div class="auth-card">
+  <div class="auth-layout">
+    <div class="auth-card">
 
     <div class="auth-logo">
       <img src="{{ url_for('static', filename='css/MCE_logo.jpg') }}" alt="MCE Logo">
@@ -49,17 +50,32 @@
       </button>
     </form>
 
-    <div style="text-align:center; margin-top:20px; font-size:13px; color:var(--text-muted);">
+    <div class="auth-meta">
       New student?
-      <a href="{{ url_for('auth.register') }}" style="color:var(--gold); font-weight:600; text-decoration:none;">
+      <a href="{{ url_for('auth.register') }}" class="auth-link">
         Create Account
       </a>
     </div>
 
-    <div style="text-align:center; margin-top:16px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--navy-border); padding-top:14px;">
+    <div class="auth-footnote">
       Affiliated to Bihar Engineering University, Patna · Est. 1980
     </div>
 
+    </div>
+
+    <aside class="auth-side">
+      <div class="auth-side-badge">MCE Academic Portal</div>
+      <h2>Professional campus platform for daily academics.</h2>
+      <p>
+        Track attendance, marks, analytics, and notices in one secure place.
+        Built for students, professors, HODs, and administrators.
+      </p>
+      <ul>
+        <li><i class="bi bi-check2-circle"></i> Personalized dashboards by role</li>
+        <li><i class="bi bi-check2-circle"></i> Real-time attendance and internal updates</li>
+        <li><i class="bi bi-check2-circle"></i> Secure authentication and access control</li>
+      </ul>
+    </aside>
   </div>
 </div>
 {% endblock %}
