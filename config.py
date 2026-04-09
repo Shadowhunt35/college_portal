@@ -32,7 +32,14 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+
+    uri = os.environ.get("DATABASE_URL")
+
+    # Fix for Render PostgreSQL (IMPORTANT)
+    if uri and uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+
+    SQLALCHEMY_DATABASE_URI = uri
 
 
 class TestingConfig(Config):
