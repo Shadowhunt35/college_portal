@@ -59,9 +59,10 @@ def create_app(config_name: str = None):
         return {'error': 'Internal server error.'}, 500
 
     # ── DB + Seed ─────────────────────────────────────────────────────────────
-    with app.app_context():
-        db.create_all()
-        _seed_initial_data()
+    if os.environ.get("FLASK_ENV") != "production":
+        with app.app_context():
+            db.create_all()
+            _seed_initial_data()
 
     return app
 

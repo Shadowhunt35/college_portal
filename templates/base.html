@@ -81,9 +81,12 @@
     <a href="{{ url_for('professor.upload') }}" {% if request.endpoint == 'professor.upload' %}class="active"{% endif %}>
       <i class="bi bi-upload"></i> Upload File
     </a>
-    <a href="{{ url_for('professor.risk_report') }}" {% if request.endpoint == 'professor.risk_report' %}class="active"{% endif %}>
-      <i class="bi bi-shield-exclamation"></i> Risk Report
+    {% if current_user.role == 'admin' %}
+      <a href="{{ url_for('professor.risk_report') }}" {% if request.endpoint == 'professor.risk_report' %}class="active"{% endif %}>
+         <i class="bi bi-shield-exclamation"></i> Risk Report
     </a>
+    {% endif %}
+
     {% endif %}
 
     {% if current_user.role == 'hod' %}
