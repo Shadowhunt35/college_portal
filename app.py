@@ -61,8 +61,11 @@ def create_app(config_name: str = None):
     # ── DB + Seed ─────────────────────────────────────────────────────────────
     
     with app.app_context():
+      try:
         db.create_all()
         _seed_initial_data()
+      except Exception as e:
+        print("DB INIT ERROR:", e)
 
     return   app
 
