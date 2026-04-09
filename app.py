@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, url_for
+from flask import Flask, app, redirect, url_for
 from dotenv import load_dotenv
 from extensions import db, login_manager
 from config import config
@@ -59,12 +59,14 @@ def create_app(config_name: str = None):
         return {'error': 'Internal server error.'}, 500
 
     # ── DB + Seed ─────────────────────────────────────────────────────────────
-    if os.environ.get("FLASK_ENV") != "production":
-        with app.app_context():
-            db.create_all()
-            _seed_initial_data()
+    
+    with app.app_context():
+        db.create_all()
+        _seed_initial_data()
 
-    return app
+    return   app
+
+   
 
 
 def _seed_initial_data():
