@@ -3,12 +3,16 @@ Professor Service
 Handles all professor-related business logic.
 """
 
-from datetime import datetime
+import datetime
 from extensions import db
 from models import (User, Subject, Attendance, Mark,
-                    CGPA, ProfessorSubject, Batch, Notice)
+                    CGPA, ProfessorSubject)
 from ml.predict import predict_student_risk
 from src.logger import logger
+
+import io
+import pandas as pd
+
 
 
 def get_professor_subjects(professor: User) -> list:
@@ -53,7 +57,7 @@ def get_professor_dashboard_data(professor: User) -> dict:
         students = get_subject_students(subject.id, a.batch_id)
 
         # Count attendance records for today
-        today = datetime.today().date()
+        today = datetime.datetime.today().date()
         marked_today = Attendance.query.filter_by(
             subject_id = subject.id,
             date       = today
@@ -143,7 +147,7 @@ def mark_attendance(professor: User, subject_id: int,
         return {'success': False, 'error': 'Not authorised for this subject.'}
 
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
         return {'success': False, 'error': 'Invalid date format.'}
 
@@ -380,3 +384,196 @@ def _clamp(value, min_val, max_val):
     if value is None or value == '':
         return None
     return max(min_val, min(max_val, float(value)))
+
+"""
+download attendance report as Excel for a date range
+"""
+
+
+
+
+"""
+REPLACE the get_attendance_report function in services/professor_service.py
+"""
+
+def get_attendance_report(professor, subject_id: int, batch_id: int,
+                          from_date: str, to_date: str, att_type: str = 'both'):
+    """
+    Generate Excel attendance report with full header info.
+    Returns (bytes, subject, start, end) or None on error.
+    """
+    import io
+    import datetime
+    import pandas as pd
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    assignment = ProfessorSubject.query.filter_by(
+        professor_id=professor.id,
+        subject_id=subject_id,
+        batch_id=batch_id
+    ).first()
+    if not assignment:
+        return None
+
+    subject  = Subject.query.get(subject_id)
+    students = get_subject_students(subject_id, batch_id)
+    batch    = assignment.batch
+
+    try:
+        start = datetime.date.fromisoformat(from_date)
+        end   = datetime.date.fromisoformat(to_date)
+    except (ValueError, TypeError):
+        return None
+
+    # Fetch records
+    query = Attendance.query.filter(
+        Attendance.subject_id == subject_id,
+        Attendance.date >= start,
+        Attendance.date <= end,
+    )
+    if att_type != 'both':
+        query = query.filter(Attendance.type == att_type)
+
+    records  = query.order_by(Attendance.date, Attendance.type).all()
+    dates    = sorted(set((r.date, r.type) for r in records))
+    rec_map  = {(r.student_id, r.date, r.type): r.present for r in records}
+
+    # Build data rows
+    rows = []
+    for student in students:
+        row = {'Roll No': student.reg_no, 'Name': student.name}
+        present_count = total_count = 0
+        for (date, rtype) in dates:
+            col = f'{date.strftime("%d-%b")} ({rtype[0].upper()})'
+            val = rec_map.get((student.id, date, rtype))
+            if val is True:
+                row[col] = 'P'; present_count += 1; total_count += 1
+            elif val is False:
+                row[col] = 'A'; total_count += 1
+            else:
+                row[col] = '-'
+        row['Present'] = present_count
+        row['Total']   = total_count
+        row['Att. %']  = round(present_count / total_count * 100, 1) if total_count else 0
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    # Write to Excel with rich header
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        # Write data starting from row 7 (leave 6 rows for header)
+        df.to_excel(writer, index=False, sheet_name='Attendance', startrow=6)
+        ws = writer.sheets['Attendance']
+
+        # ── Info header block ──────────────────────────────────────
+        header_fill  = PatternFill("solid", fgColor="4A2518")   # MCE brown
+        subhead_fill = PatternFill("solid", fgColor="6B3A2A")
+        white_font   = Font(color="FFFFFF", bold=True, size=12)
+        normal_font  = Font(color="FFFFFF", size=10)
+        center       = Alignment(horizontal="center", vertical="center")
+
+        # Row 1: College name
+        ws.merge_cells('A1:H1')
+        ws['A1'] = 'MOTIHARI COLLEGE OF ENGINEERING, MOTIHARI'
+        ws['A1'].font      = Font(color="FFFFFF", bold=True, size=14)
+        ws['A1'].fill      = header_fill
+        ws['A1'].alignment = center
+        ws.row_dimensions[1].height = 28
+
+        # Row 2: Affiliation
+        ws.merge_cells('A2:H2')
+        ws['A2'] = 'Bihar Engineering University | AICTE Approved'
+        ws['A2'].font      = Font(color="F5C842", size=10)
+        ws['A2'].fill      = header_fill
+        ws['A2'].alignment = center
+        ws.row_dimensions[2].height = 18
+
+        # Row 3: blank separator
+        ws.merge_cells('A3:H3')
+        ws['A3'].fill = subhead_fill
+        ws.row_dimensions[3].height = 6
+
+        # Row 4: Subject + Dept
+        ws.merge_cells('A4:D4')
+        ws['A4'] = f'Subject: {subject.name} ({subject.code})'
+        ws['A4'].font = normal_font
+        ws['A4'].fill = subhead_fill
+        ws['A4'].alignment = Alignment(vertical="center", indent=1)
+
+        ws.merge_cells('E4:H4')
+        dept_name = subject.department.name if subject.department else 'N/A'
+        ws['E4'] = f'Department: {dept_name}'
+        ws['E4'].font = normal_font
+        ws['E4'].fill = subhead_fill
+        ws['E4'].alignment = Alignment(vertical="center", indent=1)
+        ws.row_dimensions[4].height = 20
+
+        # Row 5: Batch + Professor
+        ws.merge_cells('A5:D5')
+        ws['A5'] = f'Batch: {batch.name} ({batch.start_year}–{batch.end_year})'
+        ws['A5'].font = normal_font
+        ws['A5'].fill = subhead_fill
+        ws['A5'].alignment = Alignment(vertical="center", indent=1)
+
+        ws.merge_cells('E5:H5')
+        ws['E5'] = f'Professor: {professor.name}'
+        ws['E5'].font = normal_font
+        ws['E5'].fill = subhead_fill
+        ws['E5'].alignment = Alignment(vertical="center", indent=1)
+        ws.row_dimensions[5].height = 20
+
+        # Row 6: Date range + Type
+        ws.merge_cells('A6:D6')
+        ws['A6'] = f'Period: {start.strftime("%d %b %Y")} to {end.strftime("%d %b %Y")}'
+        ws['A6'].font = normal_font
+        ws['A6'].fill = subhead_fill
+        ws['A6'].alignment = Alignment(vertical="center", indent=1)
+
+        ws.merge_cells('E6:H6')
+        ws['E6'] = f'Type: {att_type.capitalize()} | Semester: {subject.semester}'
+        ws['E6'].font = normal_font
+        ws['E6'].fill = subhead_fill
+        ws['E6'].alignment = Alignment(vertical="center", indent=1)
+        ws.row_dimensions[6].height = 20
+
+        # ── Style the data header row (row 7) ─────────────────────
+        col_header_fill = PatternFill("solid", fgColor="C9983A")
+        for cell in ws[7]:
+            cell.font      = Font(bold=True, color="FFFFFF", size=10)
+            cell.fill      = col_header_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[7].height = 22
+
+        # ── Color P/A cells ────────────────────────────────────────
+        green_fill = PatternFill("solid", fgColor="C8F7C5")
+        red_fill   = PatternFill("solid", fgColor="FADBD8")
+        for row in ws.iter_rows(min_row=8):
+            for cell in row:
+                if cell.value == 'P':
+                    cell.fill      = green_fill
+                    cell.alignment = Alignment(horizontal="center")
+                elif cell.value == 'A':
+                    cell.fill      = red_fill
+                    cell.alignment = Alignment(horizontal="center")
+                elif cell.column == 1:
+                    cell.font = Font(bold=True)
+
+        # ── Auto-size columns ──────────────────────────────────────
+        
+
+        for i, col in enumerate(ws.columns, 1):
+            max_len = 0
+            for cell in col:
+                try:
+                    if cell.value:
+                        max_len = max(max_len, len(str(cell.value)))
+                except:
+                    pass
+
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = min(max_len + 3, 20)
+
+    output.seek(0)
+    return output.getvalue(), subject, start, end

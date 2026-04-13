@@ -8,7 +8,7 @@ from models import (User, Department, Batch, Subject,
                     ProfessorSubject, HodDepartment, Notice)
 from utils.reg_parser import parse_reg_no
 from src.logger import logger
-
+import pandas as pd
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -243,3 +243,128 @@ def update_student_semester(student_id: int, semester: int) -> dict:
     student.current_semester = semester
     db.session.commit()
     return {'success': True}
+
+"""
+Upload Student Accounts from CSV/Excel
+Admin can upload a CSV or Excel file with student details to bulk create accounts.
+"""
+
+def bulk_create_students(file_path: str) -> dict:
+    """
+    Create student accounts from a CSV/Excel file uploaded by admin.
+
+    Expected CSV columns:
+        reg_no, name, password (optional - defaults to reg_no)
+
+    Example CSV:
+        reg_no,name,password
+        22151113001,Gaurav Kumar,Welcome@123
+        22151113002,Akash Kumar,Welcome@123
+        23151113003LE,Ravishaker,Welcome@123
+
+    If password is empty → defaults to reg_no itself as password.
+    Students can change password after first login.
+    """
+    
+
+    created  = []
+    skipped  = []
+    errors   = []
+
+    try:
+        ext = file_path.rsplit('.', 1)[-1].lower()
+        df  = pd.read_csv(file_path) if ext == 'csv' else pd.read_excel(file_path)
+        df.columns = [c.strip().lower() for c in df.columns]
+
+        if 'reg_no' not in df.columns:
+            return {'success': False, 'error': 'File must have a "reg_no" column.',
+                    'created': [], 'skipped': [], 'errors': []}
+
+        if 'name' not in df.columns:
+            return {'success': False, 'error': 'File must have a "name" column.',
+                    'created': [], 'skipped': [], 'errors': []}
+
+        for i, row in df.iterrows():
+            row_num  = i + 2
+            reg_no   = str(row.get('reg_no', '')).strip().upper()
+            name     = str(row.get('name', '')).strip()
+            password = str(row.get('password', '')).strip()
+
+            # Validate
+            if not reg_no or reg_no == 'NAN':
+                errors.append(f'Row {row_num}: Empty reg_no — skipped.')
+                continue
+
+            if not name or name == 'NAN':
+                errors.append(f'Row {row_num} ({reg_no}): Empty name — skipped.')
+                continue
+
+            # Default password = reg_no
+            if not password or password == 'NAN' or password == '':
+                password = reg_no
+
+            # Check duplicate
+            if User.query.filter_by(reg_no=reg_no).first():
+                skipped.append({'reg_no': reg_no, 'name': name,
+                                'reason': 'Already exists'})
+                continue
+
+            # Parse reg no
+            parsed = parse_reg_no(reg_no)
+            if not parsed['valid']:
+                errors.append(f'Row {row_num} ({reg_no}): {parsed["error"]}')
+                continue
+
+            # Find department
+            dept = Department.query.filter_by(code=parsed['dept_code']).first()
+            if not dept:
+                errors.append(f'Row {row_num} ({reg_no}): Department code '
+                              f'{parsed["dept_code"]} not found.')
+                continue
+
+            # Find or create batch
+            batch = Batch.query.filter_by(
+                start_year=parsed['batch_start'],
+                department_id=dept.id
+            ).first()
+            if not batch:
+                batch = Batch(
+                    start_year=parsed['batch_start'],
+                    end_year=parsed['batch_end'],
+                    department_id=dept.id
+                )
+                db.session.add(batch)
+                db.session.flush()
+
+            # Create user
+            user = User(
+                name             = name,
+                reg_no           = parsed['normalized'],
+                role             = 'student',
+                department_id    = dept.id,
+                batch_id         = batch.id,
+                current_semester = parsed['start_sem'],
+                is_lateral_entry = parsed['is_lateral'],
+            )
+            user.set_password(password)
+            db.session.add(user)
+            created.append({'reg_no': reg_no, 'name': name,
+                            'dept': dept.name, 'batch': batch.name,
+                            'default_password': password})
+
+        db.session.commit()
+
+        return {
+            'success': True,
+            'created': created,
+            'skipped': skipped,
+            'errors':  errors,
+            'message': (f'{len(created)} students created, '
+                        f'{len(skipped)} skipped, '
+                        f'{len(errors)} errors.')
+        }
+
+    except Exception as e:
+        db.session.rollback()
+        return {'success': False, 'error': str(e),
+                'created': [], 'skipped': [], 'errors': []}

@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from routes.auth import role_required
+from utils.file_handler import save_upload, cleanup_upload
 from services.admin_service import (
     get_admin_dashboard_data, get_all_users,
     create_staff_account, toggle_user_active,
@@ -11,7 +12,7 @@ from services.admin_service import (
     get_all_batches, create_batch,
     get_all_departments, update_student_semester,
 )
-from models import Department, Batch, User, Subject, ProfessorSubject, HodDepartment
+from models import User, HodDepartment
 from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -240,3 +241,68 @@ def batches():
 def departments():
     all_depts = get_all_departments()
     return render_template('admin/departments.html', departments=all_depts)
+
+"""
+
+Student Csv Upload Route
+Admin can upload a CSV or Excel file with student details to bulk create accounts.
+    
+"""
+
+@admin_bp.route('/students/bulk-upload', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def bulk_upload_students():
+    """Upload a CSV/Excel file to create multiple student accounts at once."""
+    result = None
+
+    if request.method == 'POST':
+        file = request.files.get('file')
+
+        if not file or not file.filename:
+            flash('Please select a file.', 'danger')
+            return redirect(url_for('admin.bulk_upload_students'))
+
+        allowed = {'csv', 'xlsx', 'xls'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed:
+            flash('Only CSV, XLSX and XLS files are allowed.', 'danger')
+            return redirect(url_for('admin.bulk_upload_students'))
+
+        filepath = save_upload(file, 'static/uploads')
+        try:
+            from services.admin_service import bulk_create_students
+            result = bulk_create_students(filepath)
+            if result['success']:
+                flash(result['message'], 'success')
+            else:
+                flash(f'Upload failed: {result["error"]}', 'danger')
+        finally:
+            cleanup_upload(filepath)
+
+    return render_template('admin/bulk_upload_students.html', result=result)
+
+
+@admin_bp.route('/students/download-template')
+@login_required
+@role_required('admin')
+def download_student_template():
+    """Download a sample CSV template for bulk student upload."""
+    import io
+    import csv
+    from flask import Response
+
+    output  = io.StringIO()
+    writer  = csv.writer(output)
+    writer.writerow(['reg_no', 'name', 'password'])
+    writer.writerow(['22151113001', 'Student Name Here', 'Welcome@123'])
+    writer.writerow(['22151113002', 'Another Student',   ''])
+    writer.writerow(['23151113003LE', 'Lateral Entry Student', 'Welcome@123'])
+    output.seek(0)
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition':
+                 'attachment; filename=student_upload_template.csv'}
+    )

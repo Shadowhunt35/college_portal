@@ -7,7 +7,6 @@ All endpoints require authentication via session.
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from models import User, Subject, Attendance, Mark, CGPA, Notice, Batch, Department
-from ml.predict import predict_student_risk
 from services.student_service import get_student_dashboard_data
 from services.professor_service import get_risk_report
 

@@ -223,9 +223,14 @@ class Notice(db.Model):
 
     id            = db.Column(db.Integer, primary_key=True)
     title         = db.Column(db.String(200), nullable=False)
-    body          = db.Column(db.Text,        nullable=False)
-    posted_by     = db.Column(db.Integer, db.ForeignKey('users.id'),        nullable=False)
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'),  nullable=True)  # null = all depts
+    body          = db.Column(db.Text, nullable=False)
+    posted_by     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=True)  # null = all
+
+    pdf_filename  = db.Column(db.String(255), nullable=True)
+
+    target        = db.Column(db.String(20), default='all')  # all / student / professor
+
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

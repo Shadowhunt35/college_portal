@@ -124,6 +124,32 @@ def post_notice(hod: User, title: str,
     return {'success': True}
 
 
+def post_notice_with_pdf(hod, title: str, body: str,
+                          dept_id: int = None, target: str = 'all',
+                          pdf_filename: str = None) -> dict:
+    """Post a notice with optional PDF attachment and target audience."""
+    if not title or not body:
+        return {'success': False, 'error': 'Title and body are required.'}
+ 
+    departments = get_hod_departments(hod)
+    dept_ids    = [d.id for d in departments]
+ 
+    if dept_id and dept_id not in dept_ids:
+        return {'success': False, 'error': 'Not authorised for this department.'}
+ 
+    from models import Notice
+    db.session.add(Notice(
+        title         = title.strip(),
+        body          = body.strip(),
+        posted_by     = hod.id,
+        department_id = dept_id,
+        target        = target,
+        pdf_filename  = pdf_filename,
+    ))
+    db.session.commit()
+    return {'success': True}
+
+
 def delete_notice(hod: User, notice_id: int) -> dict:
     """Delete a notice posted by this HOD."""
     notice = Notice.query.get(notice_id)

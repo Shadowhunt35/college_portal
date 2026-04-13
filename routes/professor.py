@@ -2,6 +2,9 @@ from flask import (Blueprint, render_template, request,
                    redirect, url_for, flash, jsonify)
 from flask_login import login_required, current_user
 from routes.auth import role_required
+from flask import send_file
+import io
+
 from services.professor_service import (
     get_professor_dashboard_data,
     get_attendance_data,
@@ -350,6 +353,7 @@ def _process_marks_upload(parsed, subject_id, batch_id,
     }
 
 
+
 def _process_attendance_upload(parsed, subject_id, academic_year) -> dict:
     """Match uploaded attendance to students and save."""
     from models import User
@@ -401,3 +405,48 @@ def _process_attendance_upload(parsed, subject_id, academic_year) -> dict:
         'skipped':  skipped,
         'warnings': parsed['warnings'],
     }
+
+# Download attendance report as Excel for a date range
+
+@professor_bp.route('/attendance/download')
+@login_required
+@role_required('professor', 'hod')
+def download_attendance():
+    """Download attendance report as Excel for a date range."""
+    subject_id = request.args.get('subject_id', type=int)
+    batch_id   = request.args.get('batch_id',   type=int)
+    from_date  = request.args.get('from_date',  '')
+    to_date    = request.args.get('to_date',    '')
+    att_type   = request.args.get('att_type',   'both')
+ 
+    if not all([subject_id, batch_id, from_date, to_date]):
+        flash('Please select subject, batch and date range.', 'danger')
+        return redirect(url_for('professor.attendance',
+                                subject_id=subject_id, batch_id=batch_id))
+ 
+    from services.professor_service import get_attendance_report
+    result = get_attendance_report(
+        current_user, subject_id, batch_id,
+        from_date, to_date, att_type
+    )
+ 
+    if result is None:
+        flash('Could not generate report. Check your inputs.', 'danger')
+        return redirect(url_for('professor.attendance',
+                                subject_id=subject_id, batch_id=batch_id))
+ 
+    file_bytes, subject, start, end = result
+ 
+    filename = (
+        f'Attendance_{subject.code}_'
+        f'{start.strftime("%d%b")}_to_{end.strftime("%d%b%Y")}'
+        f'{"_"+att_type if att_type != "both" else ""}.xlsx'
+    )
+ 
+    return send_file(
+        io.BytesIO(file_bytes),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
+ 

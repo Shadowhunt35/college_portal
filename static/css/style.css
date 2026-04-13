@@ -254,3 +254,7 @@ hr{border-color:var(--navy-border);opacity:1}
   .auth-card{padding:30px 22px}
   .auth-side{display:none}
 }
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}

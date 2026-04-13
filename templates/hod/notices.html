@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Notices — HOD{% endblock %}
+{% block page_title %}Notices{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <h3><i class="bi bi-megaphone me-2"></i>Notices</h3>
@@ -13,15 +15,29 @@
         <i class="bi bi-plus-circle me-2 text-primary"></i>Post New Notice
       </div>
       <div class="card-body">
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
+
           <div class="mb-3">
             <label class="form-label fw-semibold">Title</label>
-            <input type="text" name="title" class="form-control" required>
+            <input type="text" name="title" class="form-control"
+                   placeholder="Notice title" required>
           </div>
+
           <div class="mb-3">
             <label class="form-label fw-semibold">Body</label>
-            <textarea name="body" class="form-control" rows="4" required></textarea>
+            <textarea name="body" class="form-control" rows="4"
+                      placeholder="Notice content..." required></textarea>
           </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Send To</label>
+            <select name="target" class="form-select">
+              <option value="all">All (Students + Professors)</option>
+              <option value="student">Students Only</option>
+              <option value="professor">Professors Only</option>
+            </select>
+          </div>
+
           <div class="mb-3">
             <label class="form-label fw-semibold">Department</label>
             <select name="dept_id" class="form-select">
@@ -31,6 +47,17 @@
               {% endfor %}
             </select>
           </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-paperclip me-1"></i>Attach PDF
+              <small class="text-muted fw-normal">(optional)</small>
+            </label>
+            <input type="file" name="pdf_file" class="form-control"
+                   accept=".pdf">
+            <div class="form-text">Attach circular, timetable or any PDF document.</div>
+          </div>
+
           <button type="submit" class="btn btn-primary w-100">
             <i class="bi bi-send me-2"></i>Post Notice
           </button>
@@ -45,24 +72,55 @@
     <div class="card shadow-sm mb-3">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start">
-          <h6 class="fw-bold mb-1">{{ notice.title }}</h6>
-          <div class="d-flex align-items-center gap-2">
-            <small class="text-muted">{{ notice.created_at.strftime('%d %b %Y') }}</small>
-            {% if notice.posted_by == current_user.id %}
-            <form method="POST"
-                  action="{{ url_for('hod.delete_notice_route', notice_id=notice.id) }}"
-                  onsubmit="return confirm('Delete this notice?')">
-              <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i>
-              </button>
-            </form>
-            {% endif %}
+          <div class="flex-grow-1">
+            <h6 class="fw-bold mb-1">{{ notice.title }}</h6>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <!-- Department badge -->
+              <span class="badge bg-secondary">
+                {% if notice.department %}{{ notice.department.name }}
+                {% else %}All Departments{% endif %}
+              </span>
+              <!-- Target badge -->
+              {% if notice.target == 'student' %}
+                <span class="badge bg-info text-dark">
+                  <i class="bi bi-mortarboard me-1"></i>Students Only
+                </span>
+              {% elif notice.target == 'professor' %}
+                <span class="badge bg-warning text-dark">
+                  <i class="bi bi-person-badge me-1"></i>Professors Only
+                </span>
+              {% else %}
+                <span class="badge bg-success">
+                  <i class="bi bi-people me-1"></i>All
+                </span>
+              {% endif %}
+              <!-- PDF badge -->
+              {% if notice.pdf_filename %}
+                <a href="{{ url_for('hod.download_notice_pdf', filename=notice.pdf_filename) }}"
+                   class="badge bg-danger text-decoration-none"
+                   target="_blank">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>PDF Attached
+                </a>
+              {% endif %}
+            </div>
+            <p class="text-muted mb-1 small">{{ notice.body }}</p>
+            <small class="text-muted">
+              Posted by {{ notice.poster.name }} ·
+              {{ notice.created_at.strftime('%d %b %Y, %I:%M %p') }}
+            </small>
           </div>
+          <!-- Delete button -->
+          {% if notice.posted_by == current_user.id %}
+          <form method="POST"
+                action="{{ url_for('hod.delete_notice_route', notice_id=notice.id) }}"
+                class="ms-3"
+                onsubmit="return confirm('Delete this notice?')">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
         </div>
-        <span class="badge bg-secondary mb-2">
-          {% if notice.department %}{{ notice.department.name }}{% else %}All Departments{% endif %}
-        </span>
-        <p class="text-muted mb-0 small">{{ notice.body }}</p>
       </div>
     </div>
     {% else %}
