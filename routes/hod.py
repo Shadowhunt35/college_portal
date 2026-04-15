@@ -1,5 +1,6 @@
 import os
 import datetime
+from models import Notice
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_login import login_required, current_user
 from routes.auth import role_required
@@ -84,9 +85,10 @@ def notices():
 
         return redirect(url_for('hod.notices'))
 
-    from models import Notice
+    
     all_notices = Notice.query.filter(
-        Notice.department_id.in_(dept_ids)
+    (Notice.department_id.in_(dept_ids)) |
+    (Notice.department_id == None)
     ).order_by(Notice.created_at.desc()).all()
 
     return render_template('hod/notices.html',
