@@ -457,7 +457,7 @@ def get_attendance_report(professor, subject_id: int, batch_id: int,
     # Build data rows
     rows = []
     for student in students:
-        row = {'Roll No': student.reg_no, 'Name': student.name}
+        row = {'REG_NO': student.reg_no, 'NAME': student.name}
         present_count = total_count = 0
         for (date, rtype) in dates:
             col = f'{date.strftime("%d-%b")} ({rtype[0].upper()})'

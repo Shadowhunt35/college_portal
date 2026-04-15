@@ -51,6 +51,7 @@
                 <th>reg_no</th>
                 <th>name</th>
                 <th>password <span class="text-muted">(optional)</span></th>
+                <th>is_lateral_entry</th>
               </tr>
             </thead>
             <tbody>
@@ -58,16 +59,20 @@
                 <td>22151113001</td>
                 <td>Aarav Kumar</td>
                 <td>Welcome@123</td>
+                <td>0</td>
               </tr>
               <tr>
                 <td>22151113002</td>
                 <td>Sneha Patel</td>
                 <td><span class="text-muted">empty → uses reg_no</span></td>
+                <td>0</td>
               </tr>
               <tr>
                 <td>23151113003LE</td>
                 <td>Rohit Verma</td>
                 <td>Welcome@123</td>
+                <td>1</td>
+
               </tr>
             </tbody>
           </table>
@@ -76,6 +81,7 @@
           <i class="bi bi-lightbulb me-1"></i>
           If password is empty, the student's <strong>reg_no becomes their default password</strong>.
           They can change it after first login.
+          <strong>is_lateral_entry:</strong> Use <b>1</b> for lateral entry, <b>0</b> for regular students.
         </div>
       </div>
     </div>

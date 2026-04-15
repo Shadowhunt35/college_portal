@@ -1,15 +1,19 @@
 """
 Registration Number Parser
-Format: YYDDDCCCRRR[LE]
+Format: YYDDDCCCRRR
   YY  = joining year (2 digits)
   DDD = department code (3 digits)
   CCC = college code (3 digits) — must be 113
   RRR = roll number (3 digits)
-  LE  = lateral entry suffix (optional)
 
-Examples:
-  22151113003    → Normal, CSE(AI), batch 22-26, sem 1
-  23151113003LE  → Lateral entry, CSE(AI), batch 22-26, sem 3
+Lateral Entry is determined by a separate is_lateral flag, NOT by LE suffix.
+
+Batch Logic:
+  Regular student:  22151113003  → batch 22-26, sem 1
+  LE student:       23151113003  → batch 22-26, sem 3  (year - 1 = batch start)
+
+  Regular student:  23151113003  → batch 23-27, sem 1
+  LE student:       24151113003  → batch 23-27, sem 3  (year - 1 = batch start)
 """
 
 COLLEGE_CODE = '113'
@@ -24,9 +28,11 @@ DEPT_MAP = {
 }
 
 
-def parse_reg_no(reg_no: str) -> dict:
+def parse_reg_no(reg_no: str, is_lateral: bool = False) -> dict:
     """
     Parse a registration number and return its components.
+    is_lateral must be passed explicitly — no LE suffix needed.
+
     Returns a dict with keys:
         valid         → bool
         error         → str (if invalid)
@@ -40,15 +46,17 @@ def parse_reg_no(reg_no: str) -> dict:
         batch_end     → int  e.g. 2026
         start_sem     → int  1 or 3
     """
+    # Strip LE suffix if someone still passes it — handle gracefully
     raw = reg_no.strip().upper()
+    if raw.endswith('LE'):
+        raw = raw[:-2]
+        is_lateral = True  # auto-detect from suffix if present
 
-    # Check lateral entry
-    is_lateral = raw.endswith('LE')
-    numeric = raw[:-2] if is_lateral else raw
+    numeric = raw
 
     # Must be exactly 11 digits
     if not numeric.isdigit():
-        return {'valid': False, 'error': 'Registration number must contain only digits (with optional LE suffix).'}
+        return {'valid': False, 'error': 'Registration number must contain only digits.'}
 
     if len(numeric) != 11:
         return {'valid': False, 'error': f'Registration number must be 11 digits, got {len(numeric)}.'}
@@ -63,7 +71,7 @@ def parse_reg_no(reg_no: str) -> dict:
 
     # Validate college code
     if college_code != COLLEGE_CODE:
-        return {'valid': False, 'error': f'Invalid college code "{college_code}". This portal is for college code {COLLEGE_CODE} only.'}
+        return {'valid': False, 'error': f'Invalid college code "{college_code}". This portal is for MCE Motihari (code {COLLEGE_CODE}) only.'}
 
     # Validate department code
     if dept_code not in DEPT_MAP:
@@ -71,14 +79,13 @@ def parse_reg_no(reg_no: str) -> dict:
 
     # Batch logic
     if is_lateral:
-        # LE student: reg year is joining_year, batch started year before
-        batch_start = joining_year - 1   # 2023 - 1 = 2022
+        batch_start = joining_year - 1   # 23 LE → batch starts 2022
         start_sem   = 3
     else:
-        batch_start = joining_year       # 2022
+        batch_start = joining_year       # 22 regular → batch starts 2022
         start_sem   = 1
 
-    batch_end = batch_start + 4          # 4-year program
+    batch_end = batch_start + 4
 
     return {
         'valid':        True,
@@ -92,15 +99,13 @@ def parse_reg_no(reg_no: str) -> dict:
         'batch_start':  batch_start,
         'batch_end':    batch_end,
         'start_sem':    start_sem,
-        'normalized':   numeric + ('LE' if is_lateral else ''),
+        'normalized':   numeric,  # clean 11-digit number, no LE suffix
     }
 
 
-def validate_reg_no(reg_no: str) -> tuple:
-    """
-    Quick validate — returns (is_valid, error_message).
-    """
-    result = parse_reg_no(reg_no)
+def validate_reg_no(reg_no: str, is_lateral: bool = False) -> tuple:
+    """Quick validate — returns (is_valid, error_message)."""
+    result = parse_reg_no(reg_no, is_lateral)
     return result['valid'], result.get('error')
 
 

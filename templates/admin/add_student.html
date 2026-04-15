@@ -13,9 +13,9 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Registration Number</label>
             <input type="text" name="reg_no" class="form-control"
-                   placeholder="e.g. 22151113003 or 23151113003LE" required>
+                   placeholder="e.g. 22151113003" required>
             <div class="form-text">
-              Lateral entry students add LE at the end.
+              Enter 11-digit registration number only — no LE suffix needed.
             </div>
           </div>
           <div class="mb-3">
@@ -23,6 +23,32 @@
             <input type="text" name="name" class="form-control"
                    placeholder="Student's full name" required>
           </div>
+
+          <!-- Lateral Entry -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Student Type</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="is_lateral"
+                       id="regular" value="0" checked>
+                <label class="form-check-label" for="regular">
+                  Regular
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="is_lateral"
+                       id="lateral" value="1">
+                <label class="form-check-label" for="lateral">
+                  Lateral Entry (LE)
+                </label>
+              </div>
+            </div>
+            <div class="form-text">
+              <strong>Regular:</strong> 22XXXXX → batch 22-26, Sem 1<br>
+              <strong>Lateral Entry:</strong> 23XXXXX → batch 22-26, Sem 3
+            </div>
+          </div>
+
           <div class="mb-4">
             <label class="form-label fw-semibold">Password</label>
             <input type="text" name="password" class="form-control"

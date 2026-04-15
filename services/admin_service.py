@@ -95,14 +95,9 @@ def delete_user(user_id: int, current_admin_id: int) -> dict:
         HodDepartment.query.filter_by(hod_id=user.id).delete()
 
     if user.role == 'student':
-        # Get student profile id
-        from models import Student
-        student = Student.query.filter_by(user_id=user.id).first()
-        if student:
-            Attendance.query.filter_by(student_id=student.id).delete()
-            Mark.query.filter_by(student_id=student.id).delete()
-            CGPA.query.filter_by(student_id=student.id).delete()
-            db.session.delete(student)
+         Attendance.query.filter_by(student_id=user.id).delete()
+         Mark.query.filter_by(student_id=user.id).delete()
+         CGPA.query.filter_by(student_id=user.id).delete()
 
     Notice.query.filter_by(posted_by=user.id).delete()
 
@@ -178,8 +173,16 @@ def delete_subject(subject_id: int) -> dict:
     subject = Subject.query.get(subject_id)
     if not subject:
         return {'success': False, 'error': 'Subject not found.'}
+
+    # 🔥 delete dependent records FIRST
+    from models import ProfessorSubject
+
+    ProfessorSubject.query.filter_by(subject_id=subject_id).delete()
+
+    # now delete subject
     db.session.delete(subject)
     db.session.commit()
+
     return {'success': True}
 
 
@@ -263,27 +266,92 @@ Upload Student Accounts from CSV/Excel
 Admin can upload a CSV or Excel file with student details to bulk create accounts.
 """
 
+
+
+def create_student_account(reg_no: str, name: str,
+                            password: str, is_lateral: bool) -> dict:
+    """
+    Create a single student account.
+    is_lateral comes from the radio button in add_student.html.
+    """
+    from models import User, Department, Batch
+    from extensions import db
+    from utils.reg_parser import parse_reg_no
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if not reg_no or not name:
+        return {'success': False,
+                'error': 'Registration number and name are required.'}
+
+    # Strip LE suffix if admin accidentally typed it
+    clean_reg = reg_no.strip().upper()
+    if clean_reg.endswith('LE'):
+        clean_reg = clean_reg[:-2]
+        is_lateral = True
+
+    # Check duplicate
+    if User.query.filter_by(reg_no=clean_reg).first():
+        return {'success': False,
+                'error': f'Registration number "{clean_reg}" already exists.'}
+
+    parsed = parse_reg_no(clean_reg, is_lateral=is_lateral)
+    if not parsed['valid']:
+        return {'success': False, 'error': parsed['error']}
+
+    dept = Department.query.filter_by(code=parsed['dept_code']).first()
+    if not dept:
+        return {'success': False,
+                'error': f'Department code {parsed["dept_code"]} not found in database.'}
+
+    # Auto-create batch if it doesn't exist
+    batch = Batch.query.filter_by(
+        start_year=parsed['batch_start'],
+        department_id=dept.id
+    ).first()
+    if not batch:
+        batch = Batch(
+            start_year=parsed['batch_start'],
+            end_year=parsed['batch_end'],
+            department_id=dept.id
+        )
+        db.session.add(batch)
+        db.session.flush()
+
+    if not password or not password.strip():
+        password = clean_reg   # default password = reg_no
+
+    user = User(
+        name             = name.strip(),
+        reg_no           = parsed['normalized'],
+        role             = 'student',
+        department_id    = dept.id,
+        batch_id         = batch.id,
+        current_semester = parsed['start_sem'],
+        is_lateral_entry = parsed['is_lateral'],
+    )
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    logger.info(f'Student created: {clean_reg} '
+                f'({"Lateral Entry" if is_lateral else "Regular"})')
+    return {
+        'success':  True,
+        'user':     user,
+        'dept':     dept.name,
+        'batch':    f'{parsed["batch_start"]}-{parsed["batch_end"]}',
+        'semester': parsed['start_sem'],
+    }
+
+
 def bulk_create_students(file_path: str) -> dict:
-    """
-    Create student accounts from a CSV/Excel file uploaded by admin.
 
-    Expected CSV columns:
-        reg_no, name, password (optional - defaults to reg_no)
-
-    Example CSV:
-        reg_no,name,password
-        22151113001,Gaurav Kumar,Welcome@123
-        22151113002,Akash Kumar,Welcome@123
-        23151113003LE,Ravishaker,Welcome@123
-
-    If password is empty → defaults to reg_no itself as password.
-    Students can change password after first login.
-    """
     
 
-    created  = []
-    skipped  = []
-    errors   = []
+    created = []
+    skipped = []
+    errors  = []
 
     try:
         ext = file_path.rsplit('.', 1)[-1].lower()
@@ -291,11 +359,12 @@ def bulk_create_students(file_path: str) -> dict:
         df.columns = [c.strip().lower() for c in df.columns]
 
         if 'reg_no' not in df.columns:
-            return {'success': False, 'error': 'File must have a "reg_no" column.',
+            return {'success': False,
+                    'error': 'File must have a "reg_no" column.',
                     'created': [], 'skipped': [], 'errors': []}
-
         if 'name' not in df.columns:
-            return {'success': False, 'error': 'File must have a "name" column.',
+            return {'success': False,
+                    'error': 'File must have a "name" column.',
                     'created': [], 'skipped': [], 'errors': []}
 
         for i, row in df.iterrows():
@@ -304,39 +373,42 @@ def bulk_create_students(file_path: str) -> dict:
             name     = str(row.get('name', '')).strip()
             password = str(row.get('password', '')).strip()
 
-            # Validate
+            # Read is_lateral_entry — accepts yes/no/1/0/true/false
+            le_val     = str(row.get('is_lateral_entry', '0')).strip().lower()
+            is_lateral = le_val in ('1', 'yes', 'true', 'y')
+
             if not reg_no or reg_no == 'NAN':
                 errors.append(f'Row {row_num}: Empty reg_no — skipped.')
                 continue
-
             if not name or name == 'NAN':
                 errors.append(f'Row {row_num} ({reg_no}): Empty name — skipped.')
                 continue
+            if not password or password == 'NAN':
+                password = reg_no   # default password = reg_no
 
-            # Default password = reg_no
-            if not password or password == 'NAN' or password == '':
-                password = reg_no
+            # Strip LE suffix if someone added it in the CSV
+            clean_reg = reg_no
+            if clean_reg.endswith('LE'):
+                clean_reg  = clean_reg[:-2]
+                is_lateral = True
 
-            # Check duplicate
-            if User.query.filter_by(reg_no=reg_no).first():
-                skipped.append({'reg_no': reg_no, 'name': name,
+            if User.query.filter_by(reg_no=clean_reg).first():
+                skipped.append({'reg_no': clean_reg, 'name': name,
                                 'reason': 'Already exists'})
                 continue
 
-            # Parse reg no
-            parsed = parse_reg_no(reg_no)
+            parsed = parse_reg_no(clean_reg, is_lateral=is_lateral)
             if not parsed['valid']:
-                errors.append(f'Row {row_num} ({reg_no}): {parsed["error"]}')
+                errors.append(f'Row {row_num} ({clean_reg}): {parsed["error"]}')
                 continue
 
-            # Find department
             dept = Department.query.filter_by(code=parsed['dept_code']).first()
             if not dept:
-                errors.append(f'Row {row_num} ({reg_no}): Department code '
-                              f'{parsed["dept_code"]} not found.')
+                errors.append(f'Row {row_num} ({clean_reg}): '
+                              f'Department "{parsed["dept_code"]}" not found.')
                 continue
 
-            # Find or create batch
+            # Auto-create batch if missing
             batch = Batch.query.filter_by(
                 start_year=parsed['batch_start'],
                 department_id=dept.id
@@ -350,7 +422,6 @@ def bulk_create_students(file_path: str) -> dict:
                 db.session.add(batch)
                 db.session.flush()
 
-            # Create user
             user = User(
                 name             = name,
                 reg_no           = parsed['normalized'],
@@ -362,12 +433,19 @@ def bulk_create_students(file_path: str) -> dict:
             )
             user.set_password(password)
             db.session.add(user)
-            created.append({'reg_no': reg_no, 'name': name,
-                            'dept': dept.name, 'batch': batch.name,
-                            'default_password': password})
+            created.append({
+                'reg_no':           clean_reg,
+                'name':             name,
+                'dept':             dept.name,
+                'type':             'Lateral Entry' if is_lateral else 'Regular',
+                'semester':         parsed['start_sem'],
+                'batch':            f'{parsed["batch_start"]}-{parsed["batch_end"]}',
+                'default_password': password,
+            })
 
         db.session.commit()
-
+        logger.info(f'Bulk upload: {len(created)} created, '
+                    f'{len(skipped)} skipped, {len(errors)} errors.')
         return {
             'success': True,
             'created': created,
@@ -375,10 +453,11 @@ def bulk_create_students(file_path: str) -> dict:
             'errors':  errors,
             'message': (f'{len(created)} students created, '
                         f'{len(skipped)} skipped, '
-                        f'{len(errors)} errors.')
+                        f'{len(errors)} errors.'),
         }
 
     except Exception as e:
         db.session.rollback()
+        logger.error(f'Bulk upload failed: {e}')
         return {'success': False, 'error': str(e),
                 'created': [], 'skipped': [], 'errors': []}

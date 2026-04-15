@@ -1,47 +1,132 @@
-{% extends 'base.html' %} {% block title %}Users — Admin{% endblock %} {% block
-content %}
-<div class="d-flex gap-2">
+{% extends 'base.html' %}
+{% block title %}Users — Admin{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  
   <a href="{{ url_for('admin.add_user') }}" class="btn btn-primary">
     <i class="bi bi-person-plus me-1"></i>Add Staff
   </a>
-
   <a href="{{ url_for('admin.add_student') }}" class="btn btn-outline-success">
     <i class="bi bi-person-plus me-1"></i>Add Student
   </a>
-
-  <a
-    href="{{ url_for('admin.bulk_upload_students') }}"
-    class="btn btn-outline-primary"
-  >
+  <a href="{{ url_for('admin.bulk_upload_students') }}" class="btn btn-outline-primary">
     <i class="bi bi-people me-1"></i>Bulk Upload Students
   </a>
+  <button class="btn btn-warning"
+        onclick="promoteSelected()"> Promote Selected
+  </button>
+  <button class="btn btn-danger"
+        onclick="deleteSelected()">
+  🗑 Delete Selected
+  </button>
 </div>
 
 <!-- Role filter tabs -->
 <ul class="nav nav-tabs mb-3">
-  {% for r, label in [('', 'All'), ('student','Students'),
-  ('professor','Professors'), ('hod','HODs'), ('admin','Admins')] %}
+  {% for r, label in [('','All'),('student','Students'),('professor','Professors'),('hod','HODs'),('admin','Admins')] %}
   <li class="nav-item">
-    <a
-      class="nav-link {% if role_filter == r or (not role_filter and not r) %}active{% endif %}"
-      href="{{ url_for('admin.users', role=r) }}"
-      >{{ label }}</a
-    >
+    <a class="nav-link {% if role_filter == r or (not role_filter and not r) %}active{% endif %}"
+       href="{{ url_for('admin.users', role=r) }}">{{ label }}</a>
   </li>
   {% endfor %}
 </ul>
 
+<!-- Column Filters -->
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-2 px-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">NAME</label>
+        <input type="text" id="filter-name" class="form-control form-control-sm"
+               placeholder="Search name..." oninput="filterTable()">
+      </div>
+      <div class="col-md-2 col-sm-6">
+        <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">ID / REG NO</label>
+        <input type="text" id="filter-regno" class="form-control form-control-sm"
+               placeholder="Search ID..." oninput="filterTable()">
+      </div>
+      <div class="col-md-2 col-sm-4">
+        <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">DEPARTMENT</label>
+        <select id="filter-dept" class="form-select form-select-sm" onchange="filterTable()">
+          <option value="">All Departments</option>
+          <option value="CSE(AI)">CSE(AI)</option>
+          <option value="CSE">CSE</option>
+          <option value="Civil">Civil</option>
+          <option value="Mechanical">Mechanical</option>
+          <option value="EEE">EEE</option>
+          <option value="Civil with CA">Civil with CA</option>
+        </select>
+      </div>
+      <div class="col-md-2 col-sm-4">
+        <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">TYPE</label>
+        <select id="filter-type" class="form-select form-select-sm" onchange="filterTable()">
+          <option value="">All Types</option>
+          <option value="Regular">Regular</option>
+          <option value="Lateral Entry">Lateral Entry</option>
+        </select>
+      </div>
+      <div class="col-md-2 col-sm-4">
+        <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">STATUS</label>
+        <select id="filter-status" class="form-select form-select-sm" onchange="filterTable()">
+          <option value="">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      
+      <div class="col-md-2 col-sm-4">
+          <label class="form-label form-label-sm text-muted mb-1" style="font-size:11px;">SEMESTER</label>
+          <select id="filter-sem" class="form-select form-select-sm" onchange="filterTable()">
+            <option value="">All</option>
+            <option value="S1">S1</option>
+            <option value="S2">S2</option>
+            <option value="S3">S3</option>
+            <option value="S4">S4</option>
+            <option value="S5">S5</option>
+            <option value="S6">S6</option>
+            <option value="S7">S7</option>
+            <option value="S8">S8</option>
+          </select>
+      </div>
+      <div class="col-md-1 col-sm-12">
+        <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearFilters()" title="Clear all filters">
+          <i class="bi bi-x-circle me-1"></i>Clear
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row count badge -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <span class="text-muted small" id="row-count"></span>
+
+  <div>
+    <span class="text-muted small" id="filter-active-badge"></span>
+    <span class="badge bg-info ms-2" id="selected-count"></span>
+  </div>
+</div>
+
+<!-- Users Table -->
 <div class="card shadow-sm">
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table class="table table-hover mb-0" id="users-table">
+        <thead class="table-light">
           <tr>
-            <th>#</th>
+            <th>
+              <input type="checkbox" onclick="toggleAll(this)">
+            </th>
+            <th style="width:40px">#</th>
             <th>Name</th>
             <th>ID / Reg No</th>
             <th>Role</th>
             <th>Department</th>
+            <th>Type</th>
+            <th>Semester</th>
             <th>Status</th>
             <th>Joined</th>
             <th>Actions</th>
@@ -49,89 +134,97 @@ content %}
         </thead>
         <tbody>
           {% for u in users %}
-          <tr>
+          <tr data-name="{{ u.name | lower }}"
+              data-regno="{{ u.reg_no | lower }}"
+              data-dept="{{ u.department.name if u.department else '' }}"
+              data-type="{{ 'Lateral Entry' if u.is_lateral_entry else 'Regular' }}"
+              data-status="{{ 'Active' if u.is_active else 'Inactive' }}"
+              data-sem="S{{ u.current_semester }}">
+            <td>{% if u.role == 'student' %}<input type="checkbox" class="user-checkbox" value="{{ u.id }}">{% endif %}</td>
             <td class="text-muted">{{ loop.index }}</td>
             <td class="fw-semibold">{{ u.name }}</td>
             <td><code>{{ u.reg_no }}</code></td>
             <td>
-              <span
-                class="badge {% if u.role == 'admin' %}bg-danger {% elif u.role == 'hod' %}bg-warning text-dark {% elif u.role == 'professor' %}bg-info {% else %}bg-secondary{% endif %}"
-              >
+              <span class="badge
+                {% if u.role == 'admin' %}bg-danger
+                {% elif u.role == 'hod' %}bg-warning text-dark
+                {% elif u.role == 'professor' %}bg-info text-dark
+                {% else %}bg-secondary{% endif %}">
                 {{ u.role }}
               </span>
             </td>
-            <td>{{ u.department.name if u.department else '—' }}</td>
+            <td><small>{{ u.department.name if u.department else '—' }}</small></td>
+
+            <!-- Type column -->
             <td>
-              {% if u.is_active %}
-              <span class="badge bg-success">Active</span>
+              {% if u.role == 'student' %}
+                {% if u.is_lateral_entry %}
+                  <span class="badge bg-warning text-dark">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Lateral
+                  </span>
+                {% else %}
+                  <span class="badge bg-success">
+                    <i class="bi bi-person-check me-1"></i>Regular
+                  </span>
+                {% endif %}
               {% else %}
-              <span class="badge bg-danger">Inactive</span>
+                <span class="text-muted small">—</span>
               {% endif %}
             </td>
-            <td class="text-muted small">
-              {{ u.created_at.strftime('%d %b %Y') }}
+
+            <!-- Semester -->
+            <td>
+              {% if u.role == 'student' %}
+                <select class="form-select form-select-sm"
+                style="width:70px;"
+                onchange="updateSem(this, {{ u.id }})">
+    
+                {% for s in range(1,9) %}
+                <option value="{{ s }}" {% if u.current_semester == s %}selected{% endif %}>
+                S{{ s }}
+                </option>
+                {% endfor %}
+    
+                </select>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
             </td>
+
+            <td>
+              {% if u.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-danger">Inactive</span>
+              {% endif %}
+            </td>
+
+            <td class="text-muted small">{{ u.created_at.strftime('%d %b %Y') }}</td>
+
             <td>
               <div class="d-flex gap-1">
                 <!-- Toggle active -->
-                <form
-                  method="POST"
-                  action="{{ url_for('admin.toggle_user', user_id=u.id) }}"
-                >
-                  <button
-                    type="submit"
-                    class="btn btn-sm btn-outline-{{ 'warning' if u.is_active else 'success' }}"
-                    title="{{ 'Deactivate' if u.is_active else 'Activate' }}"
-                  >
-                    <i
-                      class="bi bi-{{ 'pause' if u.is_active else 'play' }}"
-                    ></i>
+                <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}">
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-{{ 'warning' if u.is_active else 'success' }}"
+                          title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                    <i class="bi bi-{{ 'pause' if u.is_active else 'play' }}"></i>
                   </button>
                 </form>
-
-                <!-- Update semester (students only) -->
-                {% if u.role == 'student' %}
-                <form
-                  method="POST"
-                  action="{{ url_for('admin.update_semester', user_id=u.id) }}"
-                  class="d-flex gap-1"
-                >
-                  <select name="semester" class="form-select form-select-sm" style="width:70px;">
-                    {% for s in range(1,9) %}
-                    <option value="{{ s }}" {% if u.current_semester == s %}selected{% endif %}>S{{ s }}</option>
-                    {% endfor %}
-                  </select>
-                  <button
-                    type="submit"
-                    class="btn btn-sm btn-outline-info"
-                    title="Update Semester"
-                  >
-                    <i class="bi bi-arrow-up-circle"></i>
-                  </button>
-                </form>
-                {% endif %}
 
                 <!-- Reset password -->
-                <button
-                  class="btn btn-sm btn-outline-secondary reset-btn"
-                  data-id="{{ u.id }}"
-                  data-name="{{ u.name | tojson }}"
-                >
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="resetPwd({{ u.id }}, '{{ u.name }}')"
+                        title="Reset Password">
                   <i class="bi bi-key"></i>
                 </button>
 
                 <!-- Delete -->
                 {% if u.id != current_user.id %}
-                <form
-                  method="POST"
-                  action="{{ url_for('admin.delete_user_route', user_id=u.id) }}"
-                  onsubmit="return confirm('Delete {{ u.name }}?')"
-                >
-                  <button
-                    type="submit"
-                    class="btn btn-sm btn-outline-danger"
-                    title="Delete"
-                  >
+                <form method="POST"
+                      action="{{ url_for('admin.delete_user_route', user_id=u.id) }}"
+                      onsubmit="return confirm('Delete {{ u.name }}? This cannot be undone.')">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
                     <i class="bi bi-trash"></i>
                   </button>
                 </form>
@@ -141,7 +234,8 @@ content %}
           </tr>
           {% else %}
           <tr>
-            <td colspan="8" class="text-center text-muted py-4">
+            <td colspan="10" class="text-center text-muted py-5">
+              <i class="bi bi-people fs-3 d-block mb-2 opacity-25"></i>
               No users found.
             </td>
           </tr>
@@ -152,63 +246,208 @@ content %}
   </div>
 </div>
 
+<!-- No results row (shown by JS) -->
+<div id="no-results" class="text-center text-muted py-5 d-none">
+  <i class="bi bi-search fs-3 d-block mb-2 opacity-25"></i>
+  No users match the current filters.
+  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="clearFilters()">Clear Filters</button>
+</div>
+
 <!-- Reset password modal -->
 <div class="modal fade" id="resetModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-sm">
     <div class="modal-content">
       <form method="POST" id="resetForm">
         <div class="modal-header">
-          <h5 class="modal-title">
-            Reset Password — <span id="resetName"></span>
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-          ></button>
+          <h6 class="modal-title"><i class="bi bi-key me-2"></i>Reset Password</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input
-            type="password"
-            name="new_password"
-            class="form-control"
-            placeholder="New password (min 6 chars)"
-            required
-            minlength="6"
-          />
+          <p class="text-muted small mb-2">Resetting password for: <strong id="resetName"></strong></p>
+          <input type="password" name="new_password" class="form-control"
+                 placeholder="New password (min 6 chars)" required minlength="6">
         </div>
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-primary">Reset Password</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary">Reset</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script>
-  function resetPwd(userId, name) {
-    document.getElementById("resetName").textContent = name;
-    document.getElementById("resetForm").action =
-      "{{ url_for('admin.reset_user_password', user_id=0) }}".replace(
-        "0",
-        userId,
-      );
-    new bootstrap.Modal(document.getElementById("resetModal")).show();
+function filterTable() {
+  const name   = document.getElementById('filter-name').value.toLowerCase().trim();
+  const regno  = document.getElementById('filter-regno').value.toLowerCase().trim();
+  const dept   = document.getElementById('filter-dept').value.toLowerCase();
+  const type   = document.getElementById('filter-type').value.toLowerCase();
+  const status = document.getElementById('filter-status').value.toLowerCase();
+  const sem = document.getElementById('filter-sem').value.toLowerCase();
+
+  const rows    = document.querySelectorAll('#users-table tbody tr[data-name]');
+  let visible   = 0;
+  let total     = rows.length;
+
+  rows.forEach(row => {
+    const match =
+      (row.dataset.name   || '').includes(name)   &&
+      (row.dataset.regno  || '').includes(regno)  &&
+      (!dept || (row.dataset.dept || '').toLowerCase() === dept) &&
+      (row.dataset.type   || '').toLowerCase().includes(type)   &&
+      (row.dataset.status || '').toLowerCase().includes(status) &&
+      (!sem || (row.dataset.sem || '').toLowerCase() === sem);
+
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+
+  // Row count
+  document.getElementById('row-count').textContent =
+    `Showing ${visible} of ${total} users`;
+
+  // No results
+  const noResults = document.getElementById('no-results');
+  const table     = document.getElementById('users-table');
+  if (visible === 0 && total > 0) {
+    noResults.classList.remove('d-none');
+    table.classList.add('d-none');
+  } else {
+    noResults.classList.add('d-none');
+    table.classList.remove('d-none');
   }
-  function filterTable(val) {
-    val = val.toLowerCase();
-    document.querySelectorAll("tbody tr").forEach((row) => {
-      row.style.display = row.innerText.toLowerCase().includes(val)
-        ? ""
-        : "none";
-    });
-  }
+
+  // Active filter badge
+  const active = [name, regno, dept, type, status].filter(Boolean).length;
+  const badge  = document.getElementById('filter-active-badge');
+  badge.innerHTML = active > 0
+    ? `<span class="badge bg-warning text-dark"><i class="bi bi-funnel me-1"></i>${active} filter${active>1?'s':''} active</span>`
+    : '';
+}
+
+function clearFilters() {
+  document.getElementById('filter-name').value   = '';
+  document.getElementById('filter-regno').value  = '';
+  document.getElementById('filter-dept').value   = '';
+  document.getElementById('filter-type').value   = '';
+  document.getElementById('filter-status').value = '';
+  filterTable();
+}
+
+function resetPwd(userId, name) {
+  document.getElementById('resetName').textContent = name;
+  document.getElementById('resetForm').action = '/admin/users/reset-password/' + userId;
+  new bootstrap.Modal(document.getElementById('resetModal')).show();
+}
+
+// Initialize count on load
+document.addEventListener('DOMContentLoaded', filterTable);
 </script>
+
+<script>
+let lastSemMap = {};
+function updateSem(select, userId) {
+  const sem = select.value;
+
+  fetch(`/admin/update-semester/${userId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ semester: sem })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert(data.error);
+    }
+  });
+}
+
+function toggleAll(source) {
+  const rows = document.querySelectorAll('#users-table tbody tr');
+
+  rows.forEach(row => {
+    if (row.style.display !== 'none') {  // 🔥 only visible rows
+      const checkbox = row.querySelector('.user-checkbox');
+      if (checkbox) checkbox.checked = source.checked;
+    }
+  });
+}
+
+function promoteSelected() {
+  const selected = [];
+
+  document.querySelectorAll('.user-checkbox:checked').forEach(cb => {
+    selected.push(cb.value);
+  });
+
+  if (selected.length === 0) {
+    alert("No students selected");
+    return;
+  }
+
+  if (!confirm(`Promote ${selected.length} students?`)) return;
+
+  fetch('/admin/students/promote-selected', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ user_ids: selected })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Selected students promoted!");
+      location.reload();
+    }
+  });
+}
+
+function updateSelectedCount() {
+  const count = document.querySelectorAll('.user-checkbox:checked').length;
+  document.getElementById('selected-count').innerText =
+    count > 0 ? `${count} selected` : '';
+}
+
+// trigger on checkbox click
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('user-checkbox') || e.target.type === 'checkbox') {
+    updateSelectedCount();
+  }
+});
+function deleteSelected() {
+  const selected = [];
+
+  document.querySelectorAll('.user-checkbox:checked').forEach(cb => {
+    selected.push(cb.value);
+  });
+
+  if (selected.length === 0) {
+    alert("No users selected");
+    return;
+  }
+
+  if (!confirm(`Delete ${selected.length} users? This cannot be undone!`)) return;
+
+  fetch('/admin/users/delete-selected', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ user_ids: selected })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Users deleted!");
+      location.reload();
+    }
+  });
+}
+</script>
+
 {% endblock %}

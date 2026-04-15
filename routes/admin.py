@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from routes.auth import role_required
 from utils.file_handler import save_upload, cleanup_upload
@@ -69,25 +69,29 @@ def add_user():
 @login_required
 @role_required('admin')
 def add_student():
-    departments = get_all_departments()
     if request.method == 'POST':
-        reg_no   = request.form.get('reg_no', '').strip()
-        name     = request.form.get('name', '').strip()
-        password = request.form.get('password', '').strip()
+        reg_no     = request.form.get('reg_no', '').strip()
+        name       = request.form.get('name', '').strip()
+        password   = request.form.get('password', '').strip()
+        is_lateral = request.form.get('is_lateral', '0') == '1'
 
-        if not password:
-            password = reg_no  # default password = reg_no
-
-        from services.auth_service import register_student
-        result = register_student(reg_no, name, password)
+        from services.admin_service import create_student_account
+        result = create_student_account(reg_no, name, password, is_lateral)
 
         if result['success']:
-            flash(f'Student "{name}" created. Default password: {password}', 'success')
+            flash(
+                f'Student "{name}" created — '
+                f'{result["dept"]}, Batch {result["batch"]}, '
+                f'Sem {result["semester"]}, '
+                f'{"Lateral Entry" if is_lateral else "Regular"}. '
+                f'Default password: {password or reg_no}',
+                'success'
+            )
             return redirect(url_for('admin.users', role='student'))
         else:
             flash(result['error'], 'danger')
 
-    return render_template('admin/add_student.html', departments=departments)
+    return render_template('admin/add_student.html')
 
 
 @admin_bp.route('/users/toggle/<int:user_id>', methods=['POST'])
@@ -121,15 +125,17 @@ def reset_user_password(user_id):
     return redirect(url_for('admin.users'))
 
 
-@admin_bp.route('/users/semester/<int:user_id>', methods=['POST'])
+
+
+@admin_bp.route('/update-semester/<int:user_id>', methods=['POST'])
 @login_required
 @role_required('admin')
 def update_semester(user_id):
-    sem    = request.form.get('semester', type=int)
+    data = request.get_json()   
+    sem = data.get('semester')
+
     result = update_student_semester(user_id, sem)
-    flash('Semester updated.' if result['success'] else result['error'],
-          'success' if result['success'] else 'danger')
-    return redirect(url_for('admin.users', role='student'))
+    return jsonify(result)
 
 
 # ── HOD Assignment ────────────────────────────────────────────────────────────
@@ -318,10 +324,10 @@ def download_student_template():
 
     output  = io.StringIO()
     writer  = csv.writer(output)
-    writer.writerow(['reg_no', 'name', 'password'])
-    writer.writerow(['22151113001', 'Student Name Here', 'Welcome@123'])
-    writer.writerow(['22151113002', 'Another Student',   ''])
-    writer.writerow(['23151113003LE', 'Lateral Entry Student', 'Welcome@123'])
+    writer.writerow(['reg_no', 'name', 'password', 'is_lateral_entry'])
+    writer.writerow(['22151113001', 'Student Name Here', 'Welcome@123', '0'])
+    writer.writerow(['22151113002', 'Another Student',   '', '0'])
+    writer.writerow(['23151113003', 'Lateral Entry Student', 'Welcome@123', '1'])
     output.seek(0)
 
     return Response(
@@ -330,3 +336,61 @@ def download_student_template():
         headers={'Content-Disposition':
                  'attachment; filename=student_upload_template.csv'}
     )
+
+@admin_bp.route('/students/promote', methods=['POST'])
+@login_required
+@role_required('admin')
+def promote_all_students():
+    from models import User
+    from extensions import db
+
+    students = User.query.filter_by(role='student').all()
+
+    for s in students:
+        if s.current_semester < 8:
+            s.current_semester += 1
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'All students promoted'})
+
+@admin_bp.route('/students/promote-selected', methods=['POST'])
+@login_required
+@role_required('admin')
+def promote_selected_students():
+    from flask import request, jsonify
+    from models import User
+    from extensions import db
+
+    data = request.get_json()
+    user_ids = data.get('user_ids', [])
+
+    students = User.query.filter(User.id.in_(user_ids)).all()
+
+    for s in students:
+        if s.current_semester < 8:
+            s.current_semester += 1
+
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@admin_bp.route('/users/delete-selected', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_selected_users():
+    from flask import request, jsonify
+    from models import User
+    from extensions import db
+
+    data = request.get_json()
+    user_ids = data.get('user_ids', [])
+
+    users = User.query.filter(User.id.in_(user_ids)).all()
+
+    for u in users:
+        db.session.delete(u)
+
+    db.session.commit()
+
+    return jsonify({'success': True})
