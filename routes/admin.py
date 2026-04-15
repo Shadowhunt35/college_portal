@@ -60,10 +60,34 @@ def add_user():
             designation = request.form.get('designation', ''),
         )
         if result['success']:
-            flash(f'Account created successfully.', 'success')
+            flash('Account created successfully.', 'success')
             return redirect(url_for('admin.users'))
         flash(result['error'], 'danger')
     return render_template('admin/add_user.html', departments=departments)
+
+@admin_bp.route('/students/add', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def add_student():
+    departments = get_all_departments()
+    if request.method == 'POST':
+        reg_no   = request.form.get('reg_no', '').strip()
+        name     = request.form.get('name', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not password:
+            password = reg_no  # default password = reg_no
+
+        from services.auth_service import register_student
+        result = register_student(reg_no, name, password)
+
+        if result['success']:
+            flash(f'Student "{name}" created. Default password: {password}', 'success')
+            return redirect(url_for('admin.users', role='student'))
+        else:
+            flash(result['error'], 'danger')
+
+    return render_template('admin/add_student.html', departments=departments)
 
 
 @admin_bp.route('/users/toggle/<int:user_id>', methods=['POST'])

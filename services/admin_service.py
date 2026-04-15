@@ -84,14 +84,28 @@ def delete_user(user_id: int, current_admin_id: int) -> dict:
         return {'success': False, 'error': 'User not found.'}
     if user.id == current_admin_id:
         return {'success': False, 'error': 'You cannot delete your own account.'}
-    
-    # Prevent deleting last active admin
-    if user.role == 'admin':
-        active_admin_count = User.query.filter_by(role='admin', is_active=True).count()
-        if active_admin_count <= 1:
-            return {'success': False, 'error': 'Cannot delete the last active admin.'}
-    
+
     name = user.name
+
+    # Delete related records first to avoid constraint errors
+    from models import ProfessorSubject, HodDepartment, Attendance, Mark, CGPA, Notice
+
+    if user.role in ('professor', 'hod'):
+        ProfessorSubject.query.filter_by(professor_id=user.id).delete()
+        HodDepartment.query.filter_by(hod_id=user.id).delete()
+
+    if user.role == 'student':
+        # Get student profile id
+        from models import Student
+        student = Student.query.filter_by(user_id=user.id).first()
+        if student:
+            Attendance.query.filter_by(student_id=student.id).delete()
+            Mark.query.filter_by(student_id=student.id).delete()
+            CGPA.query.filter_by(student_id=student.id).delete()
+            db.session.delete(student)
+
+    Notice.query.filter_by(posted_by=user.id).delete()
+
     db.session.delete(user)
     db.session.commit()
     logger.info(f'User {name} deleted by admin')

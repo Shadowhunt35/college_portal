@@ -3,14 +3,12 @@ from flask import Flask, app, redirect, url_for
 from dotenv import load_dotenv
 from extensions import db, login_manager
 from config import config
+from datetime import timedelta
+from models import (
+    Department, User
+)
 
 load_dotenv()
-
-from models import (
-    Department, Batch, User, HodDepartment,
-    Subject, StudentElective, ProfessorSubject,
-    Attendance, Mark, CGPA, Notice
-)
 
 def create_app(config_name: str = None):
 
@@ -60,7 +58,13 @@ def create_app(config_name: str = None):
             _seed_initial_data()
         except Exception as e:
             print("DB INIT ERROR:", e)
-
+    @app.context_processor
+    def inject_globals():
+        def to_ist(dt):
+            if dt is None:
+                return ''
+            return dt + timedelta(hours=5, minutes=30)
+        return dict(to_ist=to_ist)
     return app
 
 
@@ -90,6 +94,8 @@ def _seed_initial_data():
     db.session.commit()
 
     print("Database initialized!")
+
+
 
 
 if __name__ == '__main__':

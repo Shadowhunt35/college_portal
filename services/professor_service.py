@@ -390,11 +390,26 @@ download attendance report as Excel for a date range
 """
 
 
+def get_professor_notices(user):
+    """
+    Return notices relevant to this professor:
+      - notices for their department
+      - notices for ALL departments (department_id is None)
+    """
+    from models import Notice
+    dept_id = user.department_id
+    notices = (
+        Notice.query
+        .filter(
+            (Notice.department_id == dept_id) |
+            (Notice.department_id.is_(None))
+        )
+        .order_by(Notice.created_at.desc())
+        .all()
+    )
+    return notices
 
 
-"""
-REPLACE the get_attendance_report function in services/professor_service.py
-"""
 
 def get_attendance_report(professor, subject_id: int, batch_id: int,
                           from_date: str, to_date: str, att_type: str = 'both'):
@@ -561,7 +576,7 @@ def get_attendance_report(professor, subject_id: int, batch_id: int,
                     cell.font = Font(bold=True)
 
         # ── Auto-size columns ──────────────────────────────────────
-        
+        from openpyxl.utils import get_column_letter
 
         for i, col in enumerate(ws.columns, 1):
             max_len = 0

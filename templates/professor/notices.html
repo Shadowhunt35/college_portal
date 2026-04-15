@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Notices — Professor{% endblock %}
+{% block page_title %}Notices{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h4 class="fw-bold"><i class="bi bi-bell me-2 text-warning"></i>Department Notices</h4>
+  <p class="text-muted mb-0">Notices posted by your HOD. Download attached PDFs directly.</p>
+</div>
+
+{% if notices %}
+<div class="row g-3">
+  {% for notice in notices %}
+
+  {% if notice.target == 'all' or notice.target == 'professor' %}
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+          <!-- Left: title + meta -->
+          <div>
+            <h5 class="fw-bold mb-2">{{ notice.title }}</h5>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              {% if notice.department_id is none %}
+                <span class="badge bg-danger">All Departments</span>
+              {% else %}
+                <span class="badge bg-primary">{{ notice.department.name }}</span>
+              {% endif %}
+              <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ to_ist(notice.created_at).strftime('%d %b %Y, %I:%M %p') }}
+              </small>
+              {% if notice.pdf_filename %}
+                <span class="badge bg-warning text-dark">
+                  <i class="bi bi-paperclip me-1"></i>PDF Attached
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right: download button -->
+          {% if notice.pdf_filename %}
+          <div class="flex-shrink-0">
+            <a href="{{ url_for('hod.download_notice_pdf', filename=notice.pdf_filename) }}" 
+              class="btn btn-sm btn-danger" target="_blank">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+            </a>
+          </div>
+          {% endif %}
+
+        </div>
+
+        {% if notice.body %}
+        <hr class="my-3">
+        <p class="mb-0 text-secondary" style="white-space: pre-line;">{{ notice.body }}</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-bell-slash display-4"></i>
+  <p class="mt-3">No notices for your department yet.</p>
+</div>
+{% endif %}
+
+{% endblock %}

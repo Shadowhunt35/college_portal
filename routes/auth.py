@@ -49,43 +49,6 @@ def login():
     return render_template('auth/login.html')
 
 
-# ── Register (students only) ──────────────────────────────────────────────────
-
-@auth_bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for(get_dashboard_route(current_user.role)))
-
-    if request.method == 'POST':
-        reg_no           = request.form.get('reg_no', '').strip()
-        name             = request.form.get('name', '').strip()
-        password         = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-
-        # Basic confirm password check
-        if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return render_template('auth/register.html', reg_no=reg_no, name=name)
-
-        result = register_student(reg_no, name, password)
-
-        if result['success']:
-            user = result['user']
-            login_user(user)
-            flash(
-                f'Account created successfully! '
-                f'Welcome, {user.name}. '
-                f'Department: {user.department.name} | '
-                f'Batch: {user.batch.name} | '
-                f'Semester: {user.current_semester}',
-                'success'
-            )
-            return redirect(url_for('student.dashboard'))
-        else:
-            flash(result['error'], 'danger')
-            return render_template('auth/register.html', reg_no=reg_no, name=name)
-
-    return render_template('auth/register.html')
 
 
 # ── Logout ────────────────────────────────────────────────────────────────────

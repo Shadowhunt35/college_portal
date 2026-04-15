@@ -3,7 +3,7 @@ Student Service
 Handles all student-related business logic.
 """
 
-from models import User, Subject, Attendance, Mark, CGPA, Notice, ProfessorSubject
+from models import User, Subject, Attendance, Mark, CGPA, Notice
 from ml.predict import predict_student_risk
 from src.logger import logger
 
@@ -97,10 +97,16 @@ def get_student_dashboard_data(student: User) -> dict:
     )
 
     # ── Notices ───────────────────────────────────────────────────────────────
-    notices = Notice.query.filter(
-        (Notice.department_id == student.department_id) |
-        (Notice.department_id == None)
-    ).order_by(Notice.created_at.desc()).limit(5).all()
+    notices = (
+        Notice.query
+        .filter(
+            (Notice.department_id == student.department_id) |
+            (Notice.department_id.is_(None))
+        )
+        .order_by(Notice.created_at.desc())
+        .limit(3)
+        .all()
+    )
 
     return {
         'subjects':          subjects,
@@ -184,11 +190,21 @@ def get_student_cgpa(student: User) -> dict:
     return {'records': records}
 
 
-def get_student_notices(student: User) -> dict:
-    """All notices for student's department + global notices."""
-    notices = Notice.query.filter(
-        (Notice.department_id == student.department_id) |
-        (Notice.department_id == None)
-    ).order_by(Notice.created_at.desc()).all()
-
-    return {'notices': notices}
+def get_student_notices(user):
+    """
+    Return notices relevant to this student:
+      - notices for their department
+      - notices for ALL departments (department_id is None)
+    """
+    from models import Notice
+    dept_id = user.department_id
+    notices = (
+        Notice.query
+        .filter(
+            (Notice.department_id == dept_id) |
+            (Notice.department_id.is_(None))
+        )
+        .order_by(Notice.created_at.desc())
+        .all()
+    )
+    return {"notices": notices}

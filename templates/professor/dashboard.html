@@ -90,57 +90,50 @@
   <button id="chatbot-toggle" onclick="toggleChat()"><i class="bi bi-robot"></i></button>
 </div>
 
-<!-- ── Download Attendance Report ─────────────────────────────── -->
-{% if subject_id and batch_id %}
-<div class="card shadow-sm mt-4">
-  <div class="card-header bg-white fw-bold">
-    <i class="bi bi-file-earmark-arrow-down me-2 text-success"></i>
-    Download Attendance Report
+<!-- ── Recent Notices ─────────────────────────────────────────── -->
+{% if recent_notices %}
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-bold">
+      <i class="bi bi-bell me-2 text-warning"></i>Recent Notices
+    </span>
+    
+    <a href="{{ url_for('professor.notices') }}" class="btn btn-sm btn-outline-secondary">
+      View All
+    </a>
   </div>
-  <div class="card-body">
-    <form method="GET" action="{{ url_for('professor.download_attendance') }}"
-          class="row g-3 align-items-end">
- 
-      <input type="hidden" name="subject_id" value="{{ subject_id }}">
-      <input type="hidden" name="batch_id"   value="{{ batch_id }}">
- 
-      <div class="col-md-3">
-        <label class="form-label fw-semibold">From Date</label>
-        <input type="date" name="from_date" class="form-control"
-               max="{{ today }}" required>
+  <ul class="list-group list-group-flush">
+    {% for notice in recent_notices %}
+    <li class="list-group-item d-flex justify-content-between align-items-start py-3">
+      <div class="me-3">
+        <div class="fw-semibold">{{ notice.title }}</div>
+        <small class="text-muted">
+          <i class="bi bi-calendar3 me-1"></i>
+          {{ notice.created_at.strftime('%d %b %Y') }}
+          {% if notice.department_id is none %}
+            &nbsp;<span class="badge bg-danger">All Dept</span>
+          {% endif %}
+        </small>
+        {% if notice.body %}
+        <div class="text-secondary small mt-1" style="max-width:500px; white-space: pre-line;">
+          {{ notice.body[:120] }}{% if notice.body|length > 120 %}…{% endif %}
+        </div>
+        {% endif %}
       </div>
- 
-      <div class="col-md-3">
-        <label class="form-label fw-semibold">To Date</label>
-        <input type="date" name="to_date" class="form-control"
-               max="{{ today }}" required>
-      </div>
- 
-      <div class="col-md-3">
-        <label class="form-label fw-semibold">Type</label>
-        <select name="att_type" class="form-select">
-          <option value="both">Theory + Lab</option>
-          <option value="theory">Theory Only</option>
-          <option value="lab">Lab Only</option>
-        </select>
-      </div>
- 
-      <div class="col-md-3">
-        <button type="submit" class="btn btn-success w-100">
-          <i class="bi bi-download me-2"></i>Download Excel
-        </button>
-      </div>
- 
-    </form>
- 
-    <div class="mt-2 small text-muted">
-      <i class="bi bi-info-circle me-1"></i>
-      Downloads an Excel file with student-wise attendance
-      (P = Present, A = Absent) for the selected date range.
-    </div>
-  </div>
+      {% if notice.pdf_filename %}
+      
+      <a href="{{ url_for('professor.download_notice_pdf', notice_id=notice.id) }}"
+         class="btn btn-outline-danger btn-sm flex-shrink-0 align-self-center">
+        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+      </a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
 </div>
 {% endif %}
+<!-- ── End Recent Notices ─────────────────────────────────────── -->
+ 
 
 {% endblock %}
 

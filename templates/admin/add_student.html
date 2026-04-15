@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Add Student — Admin{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h3><i class="bi bi-person-plus me-2"></i>Add Student Account</h3>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Registration Number</label>
+            <input type="text" name="reg_no" class="form-control"
+                   placeholder="e.g. 22151113003 or 23151113003LE" required>
+            <div class="form-text">
+              Lateral entry students add LE at the end.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Full Name</label>
+            <input type="text" name="name" class="form-control"
+                   placeholder="Student's full name" required>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Password</label>
+            <input type="text" name="password" class="form-control"
+                   placeholder="Leave empty to use reg_no as password">
+            <div class="form-text">
+              If empty — registration number becomes the default password.
+              Student can change it after first login.
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-check me-2"></i>Create Student Account
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="text-center mt-3">
+      <a href="{{ url_for('admin.bulk_upload_students') }}" class="text-muted small">
+        <i class="bi bi-people me-1"></i>Bulk upload multiple students via CSV
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

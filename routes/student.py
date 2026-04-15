@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, current_app, render_template, request, jsonify
 from flask_login import login_required, current_user
 from routes.auth import role_required
 from services.student_service import (
@@ -8,6 +8,7 @@ from services.student_service import (
     get_student_cgpa,
     get_student_notices,
 )
+from datetime import date
 from chatbot.assistant import ask_assistant, get_student_context
 from models import CGPA
 
@@ -51,7 +52,25 @@ def cgpa():
 @role_required('student')
 def notices():
     data = get_student_notices(current_user)
-    return render_template('student/notices.html', **data)
+    return render_template(
+        'student/notices.html',
+        **data,
+        today=date.today()
+    )
+ 
+@student_bp.route('/notices/download/<int:notice_id>')
+@login_required
+@role_required('student')
+def download_notice_pdf(notice_id):
+    from models import Notice
+    from flask import send_from_directory, abort
+    import os
+    notice = Notice.query.get_or_404(notice_id)
+    if not notice.pdf_filename:
+        abort(404)
+    # Match the same folder HOD uses to save files
+    upload_folder = os.path.join(current_app.root_path, 'static', 'notices')
+    return send_from_directory(upload_folder, notice.pdf_filename, as_attachment=True)
 
 
 @student_bp.route('/chat', methods=['POST'])

@@ -1,5 +1,5 @@
-from flask import (Blueprint, render_template, request,
-                   redirect, url_for, flash, jsonify)
+from flask import (Blueprint, current_app, render_template, request,
+                   redirect, send_from_directory, url_for, flash, jsonify)
 from flask_login import login_required, current_user
 from routes.auth import role_required
 from flask import send_file
@@ -450,3 +450,38 @@ def download_attendance():
         download_name=filename
     )
  
+@professor_bp.route('/notices')
+@login_required
+@role_required('professor')
+def notices():
+    from models import Notice
+    notices_list = (
+        Notice.query
+        .filter(
+            (Notice.department_id == current_user.department_id) |
+            (Notice.department_id.is_(None))
+        )
+        .order_by(Notice.created_at.desc())
+        .all()
+    )
+    return render_template('professor/notices.html', notices=notices_list)
+ 
+ 
+@professor_bp.route('/notices/download/<int:notice_id>')
+@login_required
+@role_required('professor')
+def download_notice_pdf(notice_id):
+    from models import Notice
+    from flask import abort
+    notice = Notice.query.get_or_404(notice_id)
+    if not notice.pdf_filename:
+        abort(404)
+    upload_folder = os.path.join(
+        current_app.root_path, 'static', 'uploads', 'notices'
+    )
+    return send_from_directory(
+        upload_folder,
+        notice.pdf_filename,
+        as_attachment=True,
+        download_name=notice.title + '.pdf'
+    )
